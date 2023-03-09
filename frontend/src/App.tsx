@@ -1,26 +1,36 @@
-import type { Component } from 'solid-js';
+import { Component, lazy } from 'solid-js';
 
 import logo from './logo.svg';
 import styles from './App.module.css';
+import { Routes, Route, Link } from '@solidjs/router';
+
+
+const Problems = lazy(() => import("./pages/Problems"));
+const ProblemForm = lazy(() => import("./pages/ProblemForm"));
+const Populations = lazy(() => import("./pages/PopulationList"));
+const PopulationForm = lazy(() => import("./pages/PopulationForm"));
 
 const App: Component = () => {
   return (
-    <div class={styles.App}>
-      <header class={styles.header}>
-        <img src={logo} class={styles.logo} alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          class={styles.link}
-          href="https://github.com/solidjs/solid"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn Solid
-        </a>
-      </header>
-    </div>
+    <>
+      <div class="nav-scroller bg-white shadow-sm">
+        <nav class="navbar navbar-expand-lg nav-underline" aria-label="Secondary navigation">
+          <a class="navbar-brand" href="#">Genetic Algorithm Platform</a>
+          <Link class="nav-link active" href="/problem">Problems</Link>
+          <Link class="nav-link" href="/population">Populations</Link>
+          <Link class="nav-link" href="/run">Runs</Link>
+        </nav>
+      </div>
+      <main role="main" class="container">
+        <Routes>
+          <Route path="/problem" component={Problems} />
+          <Route path="/problem/new" component={ProblemForm} />
+          <Route path="/population" component={Populations} />
+          <Route path="/population/new" component={PopulationForm} />
+          <Route path="/statistics" element={<div>Archive of old runs</div>} />
+        </Routes>
+      </main>
+    </>
   );
 };
 
