@@ -15,10 +15,13 @@ const App: Component = () => {
     <>
       <div class="nav-scroller bg-white shadow-sm">
         <nav class="navbar navbar-expand-lg nav-underline" aria-label="Secondary navigation">
-          <a class="navbar-brand" href="#">Genetic Algorithm Platform</a>
+          <a class="navbar-brand" href="#">
+            <img src={logo} width="36" height="36"/>
+            Genetic Algorithm Platform</a>
           <Link class="nav-link active" href="/problem">Problems</Link>
           <Link class="nav-link" href="/population">Populations</Link>
           <Link class="nav-link" href="/run">Runs</Link>
+          <Link class="nav-link" href="/archive">Archive</Link>
         </nav>
       </div>
       <main role="main" class="container">
