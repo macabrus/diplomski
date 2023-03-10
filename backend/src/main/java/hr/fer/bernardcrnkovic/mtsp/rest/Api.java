@@ -1,15 +1,14 @@
 package hr.fer.bernardcrnkovic.mtsp.rest;
 
 
+import hr.fer.bernardcrnkovic.mtsp.rest.model.CreateProblem;
 import io.javalin.http.Context;
 
 public class Api {
     public void addProblem(Context ctx) {
-        var label = ctx.formParam("label");
-        var file = ctx.formParam("file");
-        System.out.println(label);
-        System.out.println(file);
-        ctx.result("Ok!");
+        var dto = ctx.bodyAsClass(CreateProblem.class);
+        problemService(ctx).addProblem(dto);
+        ctx.json("Ok!");
     }
 
     public void removeProblem(Context ctx) {

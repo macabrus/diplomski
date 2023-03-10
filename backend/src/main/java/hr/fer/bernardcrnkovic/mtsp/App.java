@@ -1,5 +1,6 @@
 package hr.fer.bernardcrnkovic.mtsp;
 
+import hr.fer.bernardcrnkovic.mtsp.rest.Api;
 import io.javalin.Javalin;
 import org.jdbi.v3.core.Jdbi;
 
@@ -18,6 +19,8 @@ public class App {
                 app.attribute("db", Jdbi.create("jdbc:sqlite:app.db?journal_mode=WAL"));
             });
         });
+        var api = new Api();
+        javalin.post("/problem/new", api::addProblem);
         javalin.events(e -> {
             e.serverStarting(() -> {
                 Jdbi db = javalin.attribute("db");
