@@ -21,6 +21,7 @@ public class App {
         });
         var api = new Api();
         javalin.post("/problem/new", api::addProblem);
+        javalin.delete("/problem/{id}", api::removeProblem);
         javalin.events(e -> {
             e.serverStarting(() -> {
                 Jdbi db = javalin.attribute("db");

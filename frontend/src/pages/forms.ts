@@ -18,8 +18,15 @@ function fromEvent(setter: Setter<String>) {
 
 const toBase64 = async (file: any) => new Promise((resolve, reject) => {
   const reader = new FileReader();
-  reader.readAsDataURL(file);
-  reader.onload = () => resolve(reader.result);
+  reader.readAsArrayBuffer(file);
+  reader.onload = () => {
+    let binary = '';
+    let bytes = new Uint8Array(reader.result as ArrayBuffer);
+    for (let i = 0; i < bytes.length; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    resolve(btoa(binary))
+  };
   reader.onerror = error => reject(error);
 });
 

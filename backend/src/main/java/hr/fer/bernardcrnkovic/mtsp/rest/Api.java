@@ -7,12 +7,12 @@ import io.javalin.http.Context;
 public class Api {
     public void addProblem(Context ctx) {
         var dto = ctx.bodyAsClass(CreateProblem.class);
-        problemService(ctx).addProblem(dto);
-        ctx.json("Ok!");
+        ctx.json(problemService(ctx).addProblem(dto));
     }
 
     public void removeProblem(Context ctx) {
         var id = ctx.pathParamAsClass("id", Integer.class).get();
+        problemService(ctx);
         System.out.println(id + " deleted!");
     }
 

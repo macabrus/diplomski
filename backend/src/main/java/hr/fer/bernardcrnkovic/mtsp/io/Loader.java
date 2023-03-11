@@ -9,7 +9,7 @@ import java.util.regex.Pattern;
  * Handles loading TSPLib format problems
  */
 public class Loader {
-    public Problem loadTSPLib(String tsplibProblem) {
+    public static Problem loadTSPLib(String tsplibProblem) {
         String[] lines;
         var namePattern = Pattern.compile("NAME:\s*(?<name>.*)\n");
         var commentPattern = Pattern.compile("COMMENT:\s*(?<comment>.*)\n");
