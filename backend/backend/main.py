@@ -1,6 +1,7 @@
 import base64 as b64
 from contextlib import asynccontextmanager
 from backend.parsers import tsplib_parse
+from backend.populations import generate_population
 from starlette.applications import Starlette
 from starlette.routing import Route
 from starlette.requests import Request
@@ -51,6 +52,15 @@ async def lifespan(app: Starlette):
         #    await db.executescript(await schema.read())
     print(f"Disconnecting from local db: {DB}")
 
+async def add_population(req: Request):
+    payload = await req.json()
+    size = payload.get('size', 50)
+    problem_id = payload.get('problem_id', None)
+    if problem_id is None:
+        raise
+    problem = repo.get_problem(req.app.state.db, problem_id)
+    strategy = payload.get('strategy', ['random'])
+    generate_population()
 
 app = Starlette(
     debug=True,
@@ -58,6 +68,7 @@ app = Starlette(
         Route('/problem', add_problem, methods=['POST']),
         Route('/problem', list_problems, methods=['GET']),
         Route('/problem/{id}', list_problems, methods=['DELETE']),
+        Route('/population', add_population)
     ],
     lifespan=lifespan
 )

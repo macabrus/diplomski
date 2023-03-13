@@ -30,6 +30,10 @@ async def remove_problem(db: Connection, id: int) -> Problem:
         rows = await db.execute_fetchall('delete from problem where id = ? returning *', (id,))
         return structure(rows[0], Problem)
 
+async def get_problem(db: Connection, id: int) -> Problem:
+    rows = await db.execute_fetchall('select * from problem where id = ?', (id,))
+    return structure(rows[0], Problem)
+
 async def list_problems(db: Connection) -> list[Problem]:
     rows = await db.execute_fetchall('select * from problem')
     return list(map(lambda row: structure(row, Problem), rows))
