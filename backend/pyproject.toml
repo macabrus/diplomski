@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "backend"
+version = "0.1.0"
+description = ""
+authors = ["Bernard Crnković <bernard.crnkovic@icloud.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+attrs = "^22.2.0"
+starlette = "^0.26.0.post1"
+uvicorn = "^0.21.0"
+cattrs = "^22.2.0"
+aiosqlite = "^0.18.0"
+aiofiles = "^23.1.0"
+watchfiles = "^0.18.1"
+
+[tool.poetry.scripts]
+main = "backend:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

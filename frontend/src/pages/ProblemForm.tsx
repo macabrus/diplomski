@@ -3,12 +3,15 @@ import { Component, createMemo, createSignal, onMount } from "solid-js";
 import { Problem } from "../models/problem";
 import { model } from "./forms";
 
+
+const [label, setLabel] = createSignal("");
+const [color, setColor] = createSignal("");
+const [description, setDescription] = createSignal("");
+const [file, setFile] = createSignal("");
+
+
 const ProblemForm: Component = () => {
   const m = model;
-  const [label, setLabel] = createSignal("");
-  const [color, setColor] = createSignal("");
-  const [description, setDescription] = createSignal("");
-  const [file, setFile] = createSignal("");
 
   const form = createMemo(() => {
     const form = {
@@ -16,17 +19,17 @@ const ProblemForm: Component = () => {
       color: color(),
       description: description(),
       file: file(),
-    }
+    };
     console.log(form);
     return form;
   });
 
   async function submit(e: any) {
-    const res = await fetch("/api/problem/new", {
+    const res = await fetch("/api/problem", {
       method: "POST",
       body: JSON.stringify(form()),
     });
-    if ( 200 <= res.status && res.status < 300 ) {
+    if (200 <= res.status && res.status < 300) {
       const data: Problem = await res.json();
       const navigate = useNavigate();
       navigate(`/problem/${data.id}`);
@@ -36,7 +39,6 @@ const ProblemForm: Component = () => {
     <>
       <form class="rounded-lg m-5 p-3 shadow-sm bg-white">
         <div class="row">
-
           {/* Label */}
           <div class="col-auto mb-3">
             <label for="label" class="form-label">
@@ -98,7 +100,9 @@ const ProblemForm: Component = () => {
             id="file"
             aria-describedby="file-info"
           />
-          <div id="file-info" class="form-text">Problem description file ()</div>
+          <div id="file-info" class="form-text">
+            Problem description file ()
+          </div>
         </div>
         <div class="row justify-content-center">
           <button onclick={submit} class="btn btn-primary" type="button">
