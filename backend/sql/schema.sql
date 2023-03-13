@@ -1,18 +1,19 @@
 create table if not exists problem(
-    id int primary key,
+    id integer primary key autoincrement,
     label text,
     description text,
+    color text,
     costs json
 );
 
 create table if not exists population(
-    id int primary key,
+    id integer primary key autoincrement,
     label text,
     problem_id integer
 );
 
 create table if not exists run(
-    id int primary key,
+    id integer primary key AUTOINCREMENT,
     evolution_state json,
     status boolean,
     data_points json

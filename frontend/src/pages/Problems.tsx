@@ -10,12 +10,15 @@ interface Problem {
 const Problems: Component = () => {
     const [problems, setProblems] = createSignal([]);
     createResource(async () => {
-        return [{}]
+        const res = await fetch('/api/problem', {
+            method: 'GET'
+        });
+        setProblems(await res.json())
     })
     return <>
         <Link class="btn btn-success" href="/problem/new">Create</Link>
         <For each={problems()}>{(problem, index) =>
-            <></>
+            JSON.stringify(problem)
         }</For>
     </>
 }
