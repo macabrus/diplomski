@@ -10,6 +10,7 @@ public class Problem {
     private String description;
     private Map<Map.Entry<Integer, Integer>, Double> costs = new HashMap<>();
 
+
     public Integer getId() {
         return id;
     }
@@ -20,6 +21,9 @@ public class Problem {
 
     public String getColor() {
         return color;
+    }
+    public Map<Map.Entry<Integer, Integer>, Double> getCosts() {
+        return costs;
     }
 
     public String getDescription() {
@@ -33,21 +37,19 @@ public class Problem {
     public void setLabel(String label) {
         this.label = label;
     }
+
     public void setColor(String color) {
         this.color = color;
     }
+
     public void setDescription(String description) {
         this.description = description;
     }
 
-    public Map<Map.Entry<Integer, Integer>, Double> getCosts() {
-        return costs;
+    public void setDistances(double[][] distances) {
+        this.distances = distances;
     }
-
-    public void setCosts(Map<Map.Entry<Integer, Integer>, Double> costs) {
-        this.costs = costs;
-    }
-
+    
     /* Faster access */
     int numNodes;
     double[][] distances;

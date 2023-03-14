@@ -1,13 +1,19 @@
 import base64 as b64
 from contextlib import asynccontextmanager
+from http import client
+from datetime import time
 from backend.parsers import tsplib_parse
 from backend.populations import generate_population
 from starlette.applications import Starlette
-from starlette.routing import Route
+from starlette.routing import Route, WebSocketRoute
 from starlette.requests import Request
 from starlette.responses import JSONResponse
+from starlette.websockets import WebSocket
+from starlette.endpoints import WebSocketEndpoint
+from starlette.types import Scope, Receive, Send
 import aiosqlite
 import aiofiles
+import typing
 from . import repo
 from cattrs import unstructure, register_structure_hook
 import json
@@ -52,6 +58,61 @@ async def lifespan(app: Starlette):
         #    await db.executescript(await schema.read())
     print(f"Disconnecting from local db: {DB}")
 
+# endpoint for handling streaming of 
+class StreamEndpoint(WebSocketEndpoint):
+    encoding = 'json'
+    def __init__(self, scope, receive, send):
+        super().__init__(scope, receive, send)
+        # tracking subscriptions
+
+        # 1. client loads already stored data from run
+        # 2. subscribes as 'sub' with offet of last datapoint + 1
+        # 3. receives all newer data points
+        # {'type': 'pub', 'run_id': 1, 'offset': 1000}
+        # {'type': 'sub', 'run_id': 1, 'offset': 1000}
+        # {'type': 'update', 'run_id': 1, 'index': 1001}
+        self.subs = {}
+        ...
+    
+    async def on_connect(self, ws: WebSocket) -> None:
+        await ws.accept() # accept connection
+        print(f"[{time()}] connected: {ws.client}")
+
+    async def on_disconnect(self, ws: WebSocket, close_code: int) -> None:
+        for topic, clients in self.subs:
+            self.subs[topic] = [c for c in clients if c['ws'] is not ws]
+            if not self.subs[topic]:
+                self.subs.pop(topic)
+        print(f"[{time()}] disconnected: {ws.client} with code: {close_code}")
+    
+    async def on_receive(self, ws: WebSocket, message: dict) -> None:
+        match message['type']:
+            case 'pub':
+                ...
+            case 'sub':
+                descriptor = {'ws': ws, 'offset': message['offset']}
+                if message['run_id'] not in self.subs:
+                    self.subs[message['run_id']] = []
+                self.subs[message['run_id']].append(descriptor)
+            case 'update':
+                for sub in self.subs.get(message['run_id'], empty_list):
+                    if sub['offset'] < message['index']:
+                        sub['ws'].send_json(message)
+
+empty_list = []
+# propagates incomming messages from producer processes to interested
+# clients on the frontend
+async def handle_ws(scope: Scope, receive: Receive, send: Send):
+    subs = {}
+    if not hasattr(scope.state, 'subs'):
+        scope.state.subs = subs
+    ws = WebSocket(scope=scope, receive=receive, send=send)
+    await ws.accept()
+    # identifier info from client
+    client_info = await ws.receive_json()
+    await ws.send_text('Hello, world!')
+    await ws.close()
+
 async def add_population(req: Request):
     payload = await req.json()
     size = payload.get('size', 50)
@@ -68,7 +129,8 @@ app = Starlette(
         Route('/problem', add_problem, methods=['POST']),
         Route('/problem', list_problems, methods=['GET']),
         Route('/problem/{id}', list_problems, methods=['DELETE']),
-        Route('/population', add_population)
+        Route('/population', add_population),
+        WebSocketRoute('/stream', StreamEndpoint)
     ],
     lifespan=lifespan
 )
