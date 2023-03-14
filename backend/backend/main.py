@@ -1,22 +1,25 @@
 import base64 as b64
+import json
+import typing
 from contextlib import asynccontextmanager
-from http import client
 from datetime import time
-from backend.parsers import tsplib_parse
-from backend.populations import generate_population
+from http import client
+
+import aiofiles
+import aiosqlite
+from cattrs import register_structure_hook, unstructure
 from starlette.applications import Starlette
-from starlette.routing import Route, WebSocketRoute
+from starlette.endpoints import WebSocketEndpoint
 from starlette.requests import Request
 from starlette.responses import JSONResponse
+from starlette.routing import Route, WebSocketRoute
+from starlette.types import Receive, Scope, Send
 from starlette.websockets import WebSocket
-from starlette.endpoints import WebSocketEndpoint
-from starlette.types import Scope, Receive, Send
-import aiosqlite
-import aiofiles
-import typing
+
+from backend.parsers import tsplib_parse
+from backend.populations import generate_population
+
 from . import repo
-from cattrs import unstructure, register_structure_hook
-import json
 
 DB = 'app.db'
 

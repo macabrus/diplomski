@@ -35,6 +35,8 @@ class EvolutionConfig:
     sharing_distance: float
     stop_after_generations: int | None
     stop_after_steady_generations: int
+    mutation_operators: list[str]
+    crossover_operators: list[str]
 
 @define(kw_only=True)
 class EvolutionState:
