@@ -21,9 +21,11 @@ uvicorn backend.main:app --reload --port 8080
 ## Runner (Java)
 Python REST backend manages running Java processes because they are more performant
 and Python is better suited for REST API. Python spawns java subprocess and manages
-its lifecycle. Python sends evolution state to subprocess' STDIN and sends SIGINT
-when it wishes to suspend a process. Process stops as halts evolution as soon as
-possible and prints serialized evolution state to STDOUT. Results are streamed to stdout.
+its lifecycle.
+To debug a websocket messages, use wscat:
+```shell
+wscat --no-check -c wss://127.0.0.1/api/stream
+```
 
 REST fully trusts data comming from runner processes.
 
