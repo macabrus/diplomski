@@ -4,23 +4,36 @@ from enum import Enum, unique
 from attr import define, field
 import random
 
+def rand_color():
+    return '#{:02x}{:02x}{:02x}'.format(*map(lambda x: random.randint(0, 255), range(3)))
+
+# currently implemented only models for MTSP problems
+# but any problem can be implemented in same manner
 @define(kw_only=True)
 class Problem:
     label: str
     description: str
     id: int = None
-    color: str = field(factory=lambda: '#{:02x}{:02x}{:02x}'.format(*map(lambda x: random.randint(0, 255), range(3))))
+    color: str = field(factory=rand_color)
     costs: dict[tuple[int, int], float] = field(factory=dict)
+    representation: dict | None = None # optional structure for visualizing the problem
+
+@define(kw_only=True)
+class Fitness:
+    max_tour_length: float
+    total_length: float
 
 @define(kw_only=True)
 class Solution:
-    fitness: tuple[float, float]
+    fitness: Fitness
     phenotype: list[int]
 
 @define(kw_only=True)
 class Population:
+    label: str
     individuals: list[Solution]
-    problem: Problem
+    problem_id: int = None
+    problem: Problem = None
     ...
 
 @define(kw_only=True)
@@ -43,8 +56,6 @@ class EvolutionState:
     generation: int
     iteration: int
     population: list[Solution]
-    problem: Problem
-    config: EvolutionConfig
 
 @define(kw_only=True)
 class Metrics:
@@ -58,6 +69,9 @@ class Status(Enum):
 
 @define(kw_only=True)
 class Run:
+    id: int
     status: Status
-    last_state: EvolutionState
+    problem: Problem
+    state: EvolutionState
+    config: EvolutionConfig
     metrics: Metrics

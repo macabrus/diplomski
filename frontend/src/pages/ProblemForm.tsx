@@ -1,17 +1,16 @@
 import { useNavigate } from "@solidjs/router";
 import { Component, createMemo, createSignal, onMount } from "solid-js";
 import { Problem } from "../models/problem";
-import { model } from "./forms";
+import { model, fileModel } from "./forms";
 
 
 const [label, setLabel] = createSignal("");
 const [color, setColor] = createSignal("");
 const [description, setDescription] = createSignal("");
-const [file, setFile] = createSignal("");
+const [file, setFile] = createSignal([]);
 
 
 const ProblemForm: Component = () => {
-  const m = model;
 
   const form = createMemo(() => {
     const form = {
@@ -95,7 +94,7 @@ const ProblemForm: Component = () => {
           </label>
           <input
             type="file"
-            use:model={[file, setFile]}
+            use:fileModel={[file, setFile]}
             class="form-control"
             id="file"
             aria-describedby="file-info"
@@ -115,3 +114,7 @@ const ProblemForm: Component = () => {
 };
 
 export default ProblemForm;
+
+const _ = {
+  model, fileModel
+};

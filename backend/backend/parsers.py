@@ -21,7 +21,10 @@ def tsplib_parse(problem_str: str) -> Problem:
                 if key not in data:
                     data[key] = ''
                 data[key] += l
-    problem = Problem(label=data['NAME'], description=data['COMMENT'])
+    problem = Problem(
+        label=data.get('NAME', None),
+        description=data.get('COMMENT', None)
+    )
     print(problem)
     return problem
 

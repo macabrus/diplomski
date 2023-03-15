@@ -5,7 +5,9 @@ import styles from "./App.module.css";
 import { Routes, Route, Link, useLocation } from "@solidjs/router";
 
 const Home = lazy(() => import("./pages/Home"));
-const Problems = lazy(() => import("./pages/Problems"));
+const Problems = lazy(() => import("./pages/ProblemList"));
+const RunList = lazy(() => import("./pages/RunList"));
+const RunForm = lazy(() => import("./pages/RunForm"));
 const ProblemForm = lazy(() => import("./pages/ProblemForm"));
 const Populations = lazy(() => import("./pages/PopulationList"));
 const PopulationForm = lazy(() => import("./pages/PopulationForm"));
@@ -47,6 +49,8 @@ const App: Component = () => {
           <Route path="/problem/new" component={ProblemForm} />
           <Route path="/population" component={Populations} />
           <Route path="/population/new" component={PopulationForm} />
+          <Route path="/run" component={RunList} />
+          <Route path="/run/new" component={RunForm} />
           <Route path="/archive" element={<div>Archive of old runs</div>} />
         </Routes>
       </main>

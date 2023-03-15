@@ -1,9 +1,8 @@
 import base64 as b64
 import json
-import typing
+import sqlite3
 from contextlib import asynccontextmanager
 from datetime import time
-from http import client
 
 import aiofiles
 import aiosqlite
@@ -16,14 +15,18 @@ from starlette.routing import Route, WebSocketRoute
 from starlette.types import Receive, Scope, Send
 from starlette.websockets import WebSocket
 
+from backend.models import Problem
 from backend.parsers import tsplib_parse
-from backend.populations import generate_population
+from backend.populations import (generate_population, rotate_population,
+                                 two_opt_population)
+from backend.utils import prettify_sql
 
 from . import repo
 
+
 DB = 'app.db'
 
-register_structure_hook(aiosqlite.Row, lambda o, c: c(**o))
+register_structure_hook(Problem, lambda o, c: c(**dict(o)))
 
 async def add_problem(req: Request):
     payload = await req.json()
@@ -38,60 +41,69 @@ async def add_problem(req: Request):
     return JSONResponse(unstructure(await repo.add_problem(req.app.state.db, problem)))
 
 async def remove_problem(req: Request):
-    return JSONResponse(
-        await repo.remove_problem(req.app.state.db, req.path_params['id'])
-    )
+    removed = await repo.remove_problem(req.app.state.db, req.path_params['id'])
+    return JSONResponse(unstructure(removed))
 
 async def list_problems(req: Request):
     return JSONResponse(unstructure(await repo.list_problems(req.app.state.db)))
 
+async def create_population(req: Request):
+    payload = await req.json()
+    problem = await repo.get_problem(req.app.state.db, payload['problem_id'])
+    pop = generate_population(problem, size=payload['size'], )
+    if payload['two_opt']:
+        pop = two_opt_population(problem, pop)
+    if payload['align']:
+        pop = rotate_population(problem, pop)
+    pop = await repo.add_population(req.app.state.db, pop)
+    return JSONResponse(unstructure(pop))
+
+async def list_populations(req: Request):
+    ...
+async def remove_population():
+    ...
 @asynccontextmanager
 async def lifespan(app: Starlette):
     print(f"Connecting to local db: {DB}")
-    async with aiosqlite.connect(DB) as db:
-        await db.set_trace_callback(print)
-        aiosqlite.register_adapter(dict, lambda d: json.dumps(d))
-        aiosqlite.register_converter('json', lambda d: json.loads(d))
+    async with aiosqlite.connect(DB, detect_types=sqlite3.PARSE_DECLTYPES) as db:
+        await db.set_trace_callback(lambda sql: print(prettify_sql(sql)))
+        await db.execute('pragma journal_mode = wal')
+        aiosqlite.register_adapter(dict, json.dumps)
+        aiosqlite.register_adapter(list, json.dumps)
+        aiosqlite.register_converter('json', json.loads)
         db.row_factory = aiosqlite.Row
         async with aiofiles.open('sql/schema.sql') as schema:
             await db.executescript(await schema.read())
         app.state.db = db
         yield
-        #async with aiofiles.open('sql/drop.sql') as schema:
+        await db.commit()
+        # async with aiofiles.open('sql/drop.sql') as schema:
         #    await db.executescript(await schema.read())
     print(f"Disconnecting from local db: {DB}")
 
-# endpoint for handling streaming of 
+empty_list = []
+# endpoint for handling streaming of data points when algo is running
 class StreamEndpoint(WebSocketEndpoint):
     encoding = 'json'
     def __init__(self, scope, receive, send):
         super().__init__(scope, receive, send)
-        # tracking subscriptions
-
-        # 1. client loads already stored data from run
-        # 2. subscribes as 'sub' with offet of last datapoint + 1
-        # 3. receives all newer data points
-        # {'type': 'pub', 'run_id': 1, 'offset': 1000}
-        # {'type': 'sub', 'run_id': 1, 'offset': 1000}
-        # {'type': 'update', 'run_id': 1, 'index': 1001}
         self.subs = {}
-        ...
     
     async def on_connect(self, ws: WebSocket) -> None:
         await ws.accept() # accept connection
         print(f"[{time()}] connected: {ws.client}")
 
     async def on_disconnect(self, ws: WebSocket, close_code: int) -> None:
-        for topic, clients in self.subs:
-            self.subs[topic] = [c for c in clients if c['ws'] is not ws]
-            if not self.subs[topic]:
-                self.subs.pop(topic)
+        for run_id, clients in self.subs.items():
+            self.subs[run_id] = [c for c in clients if c['ws'] is not ws]
+            if not self.subs[run_id]:
+                self.subs.pop(run_id)
         print(f"[{time()}] disconnected: {ws.client} with code: {close_code}")
     
     async def on_receive(self, ws: WebSocket, message: dict) -> None:
         match message['type']:
             case 'pub':
-                ...
+                pass  # just trust it, todo: add some kind of sec check
             case 'sub':
                 descriptor = {'ws': ws, 'offset': message['offset']}
                 if message['run_id'] not in self.subs:
@@ -100,9 +112,10 @@ class StreamEndpoint(WebSocketEndpoint):
             case 'update':
                 for sub in self.subs.get(message['run_id'], empty_list):
                     if sub['offset'] < message['index']:
-                        sub['ws'].send_json(message)
+                        await sub['ws'].send_json(message)
+            case 'checkpoint':
+                pass  # persist state from message back into db
 
-empty_list = []
 # propagates incomming messages from producer processes to interested
 # clients on the frontend
 async def handle_ws(scope: Scope, receive: Receive, send: Send):
@@ -131,8 +144,10 @@ app = Starlette(
     routes=[
         Route('/problem', add_problem, methods=['POST']),
         Route('/problem', list_problems, methods=['GET']),
-        Route('/problem/{id}', list_problems, methods=['DELETE']),
-        Route('/population', add_population),
+        Route('/problem/{id}', remove_problem, methods=['DELETE']),
+        Route('/population', list_populations, methods=['GET']),
+        Route('/population', add_population, methods=['POST']),
+        Route('/population/{id}', remove_population, methods=['DELETE']),
         WebSocketRoute('/stream', StreamEndpoint)
     ],
     lifespan=lifespan
