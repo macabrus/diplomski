@@ -3,9 +3,11 @@ import random
 from backend.models import Population, Problem
 
 
-def generate_population(problem: Problem, size=10, two_opt=True, rotate=True) -> Population:
+def generate_population(problem: Problem, salesmen=None, size=10, two_opt=True, rotate=True) -> Population:
+    if salesmen is None:
+        raise
     for i in range(size):
-        # random.shuffle()
+        for range(problem.costs)
         ...
     ...
 

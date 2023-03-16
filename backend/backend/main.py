@@ -48,17 +48,6 @@ async def remove_problem(req: Request):
 async def list_problems(req: Request):
     return JSONResponse(unstructure(await repo.list_problems(req.app.state.db)))
 
-async def create_population(req: Request):
-    payload = await req.json()
-    problem = await repo.get_problem(req.app.state.db, payload['problem_id'])
-    pop = generate_population(problem, size=payload['size'], )
-    if payload['two_opt']:
-        pop = two_opt_population(problem, pop)
-    if payload['align']:
-        pop = rotate_population(problem, pop)
-    pop = await repo.add_population(req.app.state.db, pop)
-    return JSONResponse(unstructure(pop))
-
 async def list_populations(req: Request):
     format = req.query_params.get('format', None)
     if format == 'short':
@@ -66,8 +55,31 @@ async def list_populations(req: Request):
         return JSONResponse(unstructure(populations))
     return JSONResponse([])
 
-async def remove_population():
-    ...
+async def add_population(req: Request):
+    payload = await req.json()
+    size = payload.get('size', 50)
+    problem_id = payload.get('problem_id', None)
+    two_opt = payload.get('two_opt', False)
+    num_salesmen = payload.get('num_salesmen', False)
+    rotate = payload.get('rotate', False)
+    if problem_id is None:
+        raise
+    problem = await repo.get_problem(req.app.state.db, problem_id)
+    population = generate_population(problem, size=size, two_opt=two_opt)
+    population.problem_id = problem_id
+    population.problem = problem
+    if two_opt:
+        population = two_opt_population(population)
+    if rotate:
+        population = rotate_population(population)
+    print(population)
+    repo.add_population(req.app.state.db, population)
+    return JSONResponse(population)
+
+async def remove_population(req: Request):
+    id = req.path_params['id']
+    repo.remove_population(req.app.state.db, id)
+
 @asynccontextmanager
 async def lifespan(app: Starlette):
     print(f"Connecting to local db: {DB}")
@@ -135,22 +147,6 @@ async def handle_ws(scope: Scope, receive: Receive, send: Send):
     await ws.send_text('Hello, world!')
     await ws.close()
 
-async def add_population(req: Request):
-    payload = await req.json()
-    size = payload.get('size', 50)
-    problem_id = payload.get('problem_id', None)
-    two_opt = payload.get('two_opt', False)
-    rotate = payload.get('rotate', False)
-    if problem_id is None:
-        raise
-    problem = await repo.get_problem(req.app.state.db, problem_id)
-    population = generate_population(problem, size=size, two_opt=two_opt)
-    if two_opt:
-        population = two_opt_population(population)
-    if rotate:
-        population = rotate_population(population)
-    print(population)
-    return JSONResponse(None)
 
 app = Starlette(
     debug=True,

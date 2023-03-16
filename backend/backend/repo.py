@@ -1,11 +1,11 @@
 from unittest import skip
 
 from aiosqlite import Connection, Cursor
-from attr import astuple
+from attr import asdict, astuple
 from attrs import fields
 from backend.dtos import ShortPopulation
 from cattrs import structure, unstructure
-from .models import EvolutionState, Problem, Run, Solution
+from .models import EvolutionState, Population, Problem, Run, Solution
 
 
 def csv_slots(model, skip=set()):
@@ -20,6 +20,9 @@ def bag(obj, bag_key, keys=set()):
     for key in keys:
         bag[key] = obj.pop(key)
     return obj
+
+def unbag(obj, bag_key):
+    ...
 
 def filter_keys(obj, keys=set()):
     for key in keys:
@@ -79,9 +82,26 @@ async def has_active_depenendent_runs(db: Connection, problem_id: int):
     return bool(await db.fetchall())
 
 
-async def add_population(db: Connection, problem_id: int, population: list[Solution]):
-    sql = 'insert into population(problem_id, label, individuals) values(?, ?)'
-    await db.execute_fetchall(sql, ())
+async def add_population(db: Connection, problem_id: int, population: Population):
+    sql = f'''
+    insert into population(
+    {csv_keys(Population, skip=('id', 'problem'))}
+    ) values(
+    {csv_slots(Population, skip=('id', 'problem'))})
+    returning id
+    '''
+    async with db.cursor() as cur:
+        if await has_population_label(cur, population.label):
+            raise
+        #await cur.execute(sql, unstructure(population))
+        #rows = await cur.fetchall()
+        return []
+
+
+async def has_population_label(db: Cursor, label: str):
+    sql = 'select 1 from population where id = ?'
+    await db.execute(sql, (label, ))
+    return bool(await db.fetchall())
 
 async def remove_population(db: Connection, pop_id: int):
     sql = 'delete from population where id = ?'

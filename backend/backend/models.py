@@ -33,6 +33,7 @@ class Solution:
 
 @define(kw_only=True)
 class Population:
+    id: int
     label: str
     individuals: list[Solution]
     problem_id: int = None

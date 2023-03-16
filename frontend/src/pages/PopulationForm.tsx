@@ -10,6 +10,7 @@ import { Problem } from "../models/problem";
 import { model, numModel, boolModel } from "../lib/forms";
 
 const [label, setLabel] = createSignal("");
+const [numSalesmen, setNumSalsesmen] = createSignal(1);
 const [size, setSize] = createSignal(30);
 const [problemId, setProblemId] = createSignal<number>(-1);
 const [twoOpt, setTwoOpt] = createSignal(false);
@@ -24,6 +25,7 @@ const PopulationForm: Component = () => {
   const form = createMemo(() => {
     const form = {
       label: label(),
+      num_salesmen: numSalesmen(),
       problem_id: problemId(),
       size: size(),
       two_opt: twoOpt(),
@@ -53,6 +55,33 @@ const PopulationForm: Component = () => {
           aria-describedby="label-help"
         />
       </div>
+      <div class="mb-3">
+        <label for="num-salesmen-input" class="form-label">
+          Number of Salesmen:
+        </label>
+        <input
+          type="text"
+          use:numModel={[numSalesmen, ((val: any) => {}) as any]}
+          class="form-control"
+          aria-describedby="label-help"
+        />
+      </div>
+      
+      <div class="mb-3">
+        <input
+          type="range"
+          use:numModel={[numSalesmen, setNumSalsesmen]}
+          class="form-range"
+          id="num-salesmen-input"
+          aria-describedby="size-help"
+          min="1"
+          max="20"
+          step="1"></input>
+        <div id="two-opt-help" class="form-text">
+          {size()}
+        </div>
+      </div>
+
       <label for="customRange1" class="form-label">
         Population Size:
       </label>
