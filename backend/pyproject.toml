@@ -17,6 +17,7 @@ watchfiles = "^0.18.1"
 sqlparse = "^0.4.3"
 pygments = "^2.14.0"
 prettyprinter = "^0.18.0"
+tsplib95 = "^0.7.1"
 
 [tool.poetry.scripts]
 main = "backend:main"

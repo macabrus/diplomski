@@ -146,9 +146,9 @@ async def add_population(req: Request):
     problem = await repo.get_problem(req.app.state.db, problem_id)
     population = generate_population(problem, size=size, two_opt=two_opt)
     if two_opt:
-        population = two_opt_population(problem, population)
+        population = two_opt_population(population)
     if rotate:
-        population = rotate_population(problem, population)
+        population = rotate_population(population)
     print(population)
     return JSONResponse(None)
 

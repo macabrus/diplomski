@@ -32,9 +32,9 @@ async def add_problem(db: Connection,  problem: Problem) -> Problem:
             raise
         sql = f'''
             insert into problem({
-                csv_keys(Problem, skip=('id', 'representation'))
+                csv_keys(Problem, skip=('id',))
             })
-            values ({csv_slots(Problem, skip=('id', 'representation'))})
+            values ({csv_slots(Problem, skip=('id',))})
             returning id
         '''
         await cur.execute(sql, unstructure(problem))

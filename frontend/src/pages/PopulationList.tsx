@@ -29,13 +29,8 @@ interface Population {
 const Populations: Component = () => {
   const [populations, setPopulations] = createSignal<PopulationPreview[]>([]);
   createResource(async () => {
-    setPopulations([
-      {
-        name: "Moja populacija",
-        problem: "problem-1",
-        size: 785,
-      },
-    ]);
+    const res = await fetch('/api/population');
+    setPopulations(await res.json());
   });
 
   async function remove(id: number) {

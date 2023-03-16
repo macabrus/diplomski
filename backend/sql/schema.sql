@@ -3,7 +3,8 @@ create table if not exists problem(
     label text,
     description text,
     color text,
-    costs json
+    costs json,
+    display json
 );
 
 create table if not exists population(

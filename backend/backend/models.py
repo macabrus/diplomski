@@ -1,6 +1,7 @@
 
 from datetime import datetime
 from enum import Enum, unique
+from typing import Any
 from attr import define, field
 import random
 
@@ -15,8 +16,10 @@ class Problem:
     description: str
     id: int = None
     color: str = field(factory=rand_color)
-    costs: dict[tuple[int, int], float] = field(factory=dict)
-    representation: dict | None = None # optional structure for visualizing the problem
+    costs: list[list[int]] = None
+    # present: list[list[bool]] = field(factory=)
+    # costs: dict[tuple[int, int], float] = field(factory=dict)
+    display: dict[int, Any] = field(factory=dict) # optional structure for visualizing the problem
 
 @define(kw_only=True)
 class Fitness:
@@ -26,7 +29,7 @@ class Fitness:
 @define(kw_only=True)
 class Solution:
     fitness: Fitness
-    phenotype: list[int]
+    phenotype: list[list[int]]
 
 @define(kw_only=True)
 class Population:

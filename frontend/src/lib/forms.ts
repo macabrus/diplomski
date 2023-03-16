@@ -132,11 +132,13 @@ export function model<T>(el: any, value: Model<T>) {
         break;
       }
       case "checkbox": {
-        if (getter()) {
-        }
+        el.checked = getter();
+        el.addEventListener("input", (e) => setter(e.currentTarget.checked));
+        break;
       }
       case "file": {
         el.addEventListener("input", fileFromEvent(setter));
+        break;
       }
     }
   } else if (tag === 'select') {

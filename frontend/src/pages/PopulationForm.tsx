@@ -7,13 +7,13 @@ import {
 } from "solid-js";
 import { Problem } from "../models/problem";
 
-import { model, numModel } from "../lib/forms";
+import { model, numModel, boolModel } from "../lib/forms";
 
 const [label, setLabel] = createSignal("");
 const [size, setSize] = createSignal(30);
 const [problemId, setProblemId] = createSignal<number>(-1);
-const [twoOpt, setTwoOpt] = createSignal("");
-const [problem, setProblem] = createSignal(null);
+const [twoOpt, setTwoOpt] = createSignal(false);
+const [rotate, setRotate] = createSignal(false);
 
 const PopulationForm: Component = () => {
   const [problems, setProblems] = createSignal<Problem[]>([]);
@@ -26,6 +26,8 @@ const PopulationForm: Component = () => {
       label: label(),
       problem_id: problemId(),
       size: size(),
+      two_opt: twoOpt(),
+      rotate: rotate(),
     };
     console.log(form);
     return form;
@@ -54,15 +56,20 @@ const PopulationForm: Component = () => {
       <label for="customRange1" class="form-label">
         Population Size:
       </label>
-      <input
-        type="range"
-        use:numModel={[size, setSize]}
-        class="form-range"
-        id="size"
-        aria-describedby="size-help"
-        min="10"
-        max="1000"
-        step="10"></input>
+      <div class="mb-3">
+        <input
+          type="range"
+          use:numModel={[size, setSize]}
+          class="form-range"
+          id="size"
+          aria-describedby="size-help"
+          min="10"
+          max="1000"
+          step="10"></input>
+        <div id="two-opt-help" class="form-text">
+          {size()}
+        </div>
+      </div>
 
       <select class="form-select" use:numModel={[problemId, setProblemId]}>
         <option selected disabled>
@@ -76,7 +83,7 @@ const PopulationForm: Component = () => {
         <input
           class="form-check-input"
           type="checkbox"
-          value=""
+          use:boolModel={[twoOpt, setTwoOpt]}
           id="two-opt-check"
           aria-describedby="two-opt-help"
         />
@@ -91,7 +98,7 @@ const PopulationForm: Component = () => {
         <input
           class="form-check-input"
           type="checkbox"
-          value=""
+          use:boolModel={[rotate, setRotate]}
           id="rotate-check"
           aria-describedby="rotate-help"
         />
@@ -102,7 +109,7 @@ const PopulationForm: Component = () => {
           Align each tour to start and end in a depot closest to home depot
         </div>
       </div>
-      
+
       <button
         disabled={problemId() === -1 || !label()}
         onclick={submit}
@@ -119,4 +126,5 @@ export default PopulationForm;
 const _ = {
   model,
   numModel,
+  boolModel,
 };
