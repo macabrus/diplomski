@@ -19,29 +19,48 @@ const App: Component = () => {
   return (
     <>
       <Link href="/problem/new"></Link>
-      <div class="nav-scroller bg-white shadow-sm">
-        <nav
-          class="navbar navbar-expand-lg nav-underline"
-          aria-label="Secondary navigation"
-        >
+      <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
           <Link class="navbar-brand" href="/">
             <img src={logo} width="36" height="36" />
             Genetic Algorithm Platform
           </Link>
-          <Link class="nav-link" href="/problem">
-            Problems
-          </Link>
-          <Link class="nav-link" href="/population">
-            Populations
-          </Link>
-          <Link class="nav-link" href="/run">
-            Runs
-          </Link>
-          <Link class="nav-link" href="/archive">
-            Archive
-          </Link>
-        </nav>
-      </div>
+          <button
+            class="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navbarNav"
+            aria-controls="navbarNav"
+            aria-expanded="false"
+            aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+              <li class="nav-item">
+                <Link class="nav-link" href="/problem">
+                  Problems
+                </Link>
+              </li>
+              <li class="nav-item">
+                <Link class="nav-link" href="/population">
+                  Populations
+                </Link>
+              </li>
+              <li class="nav-item">
+                <Link class="nav-link" href="/run">
+                  Runs
+                </Link>
+              </li>
+              <li class="nav-item">
+                <Link class="nav-link" href="/archive">
+                  Archive
+                </Link>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </nav>
       <main role="main" class="container">
         <Routes>
           <Route path="/" component={Home} />

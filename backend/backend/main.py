@@ -6,6 +6,7 @@ from datetime import time
 
 import aiofiles
 import aiosqlite
+from backend.dtos import ShortPopulation
 from cattrs import register_structure_hook, unstructure
 from starlette.applications import Starlette
 from starlette.endpoints import WebSocketEndpoint
@@ -59,7 +60,12 @@ async def create_population(req: Request):
     return JSONResponse(unstructure(pop))
 
 async def list_populations(req: Request):
-    ...
+    format = req.query_params.get('format', None)
+    if format == 'short':
+        populations = await repo.list_populations_short(req.app.state.db)
+        return JSONResponse(unstructure(populations))
+    return JSONResponse([])
+
 async def remove_population():
     ...
 @asynccontextmanager
@@ -133,11 +139,18 @@ async def add_population(req: Request):
     payload = await req.json()
     size = payload.get('size', 50)
     problem_id = payload.get('problem_id', None)
+    two_opt = payload.get('two_opt', False)
+    rotate = payload.get('rotate', False)
     if problem_id is None:
         raise
-    problem = repo.get_problem(req.app.state.db, problem_id)
-    strategy = payload.get('strategy', ['random'])
-    generate_population()
+    problem = await repo.get_problem(req.app.state.db, problem_id)
+    population = generate_population(problem, size=size, two_opt=two_opt)
+    if two_opt:
+        population = two_opt_population(problem, population)
+    if rotate:
+        population = rotate_population(problem, population)
+    print(population)
+    return JSONResponse(None)
 
 app = Starlette(
     debug=True,

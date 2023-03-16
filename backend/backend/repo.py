@@ -3,6 +3,7 @@ from unittest import skip
 from aiosqlite import Connection, Cursor
 from attr import astuple
 from attrs import fields
+from backend.dtos import ShortPopulation
 from cattrs import structure, unstructure
 from .models import EvolutionState, Problem, Run, Solution
 
@@ -85,6 +86,12 @@ async def add_population(db: Connection, problem_id: int, population: list[Solut
 async def remove_population(db: Connection, pop_id: int):
     sql = 'delete from population where id = ?'
     db.execute_fetchall(sql, (pop_id,))
+
+# lists only label and id of population
+async def list_populations_short(db: Connection) -> list[ShortPopulation]:
+    sql = 'select id, label from population'
+    rows = await db.execute_fetchall(sql)
+    return list(map(lambda row: structure(row, ShortPopulation), rows))
 
 async def add_run(db: Connection,  run: Run):
     async with db.cursor() as cur:

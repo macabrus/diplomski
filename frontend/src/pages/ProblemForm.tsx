@@ -1,7 +1,7 @@
 import { useNavigate } from "@solidjs/router";
 import { Component, createMemo, createSignal, onMount } from "solid-js";
 import { Problem } from "../models/problem";
-import { model, fileModel } from "./forms";
+import { model, fileModel } from "../lib/forms";
 
 
 const [label, setLabel] = createSignal("");
@@ -100,7 +100,7 @@ const ProblemForm: Component = () => {
             aria-describedby="file-info"
           />
           <div id="file-info" class="form-text">
-            Problem description file ()
+            Problem description file (Required)
           </div>
         </div>
         <div class="row justify-content-center">

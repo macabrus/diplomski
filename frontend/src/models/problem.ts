@@ -5,7 +5,8 @@ export interface Problem {
 }
 
 export interface Population {
-
+    id: number
+    label: string
 }
 
 // export interface 
