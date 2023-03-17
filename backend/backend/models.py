@@ -1,12 +1,16 @@
 
+import random
 from datetime import datetime
 from enum import Enum, unique
 from typing import Any
+
 from attr import define, field
-import random
+
 
 def rand_color():
-    return '#{:02x}{:02x}{:02x}'.format(*map(lambda x: random.randint(0, 255), range(3)))
+    def r():
+        return random.randint(0, 255)
+    return f'#{r():02x}{r():02x}{r():02x}'
 
 # currently implemented only models for MTSP problems
 # but any problem can be implemented in same manner
@@ -16,6 +20,7 @@ class Problem:
     description: str
     id: int = None
     color: str = field(factory=rand_color)
+    depots: list[int] # currently, we focus on single home depot problems
     costs: list[list[int]] = None
     # present: list[list[bool]] = field(factory=)
     # costs: dict[tuple[int, int], float] = field(factory=dict)
@@ -27,15 +32,21 @@ class Fitness:
     total_length: float
 
 @define(kw_only=True)
+class Tour:
+    depot: int
+    tour: list[int] = field(factory=list)
+
+@define(kw_only=True)
 class Solution:
-    fitness: Fitness
-    phenotype: list[list[int]]
+    phenotype: list[Tour]
+    fitness: Fitness = None
+
 
 @define(kw_only=True)
 class Population:
-    id: int
     label: str
-    individuals: list[Solution]
+    individuals: list[Solution] = field(factory=list)
+    id: int = None
     problem_id: int = None
     problem: Problem = None
     ...

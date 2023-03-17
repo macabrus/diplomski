@@ -43,6 +43,7 @@ const PopulationForm: Component = () => {
   }
   return (
     <form class="rounded-lg m-5 p-3 shadow-sm bg-white">
+      {/* LABEL */}
       <div class="mb-3">
         <label for="exampleFormControlInput1" class="form-label">
           Label:
@@ -55,19 +56,12 @@ const PopulationForm: Component = () => {
           aria-describedby="label-help"
         />
       </div>
+
+      {/* NUMBER OF SALESMEN */}
       <div class="mb-3">
         <label for="num-salesmen-input" class="form-label">
           Number of Salesmen:
         </label>
-        <input
-          type="text"
-          use:numModel={[numSalesmen, ((val: any) => {}) as any]}
-          class="form-control"
-          aria-describedby="label-help"
-        />
-      </div>
-      
-      <div class="mb-3">
         <input
           type="range"
           use:numModel={[numSalesmen, setNumSalsesmen]}
@@ -78,14 +72,14 @@ const PopulationForm: Component = () => {
           max="20"
           step="1"></input>
         <div id="two-opt-help" class="form-text">
-          {size()}
+          {numSalesmen()}
         </div>
       </div>
 
+      <div class="mb-3">
       <label for="customRange1" class="form-label">
         Population Size:
       </label>
-      <div class="mb-3">
         <input
           type="range"
           use:numModel={[size, setSize]}
@@ -99,7 +93,7 @@ const PopulationForm: Component = () => {
           {size()}
         </div>
       </div>
-
+      
       <select class="form-select" use:numModel={[problemId, setProblemId]}>
         <option selected disabled>
           Select Problem

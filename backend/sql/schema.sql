@@ -3,6 +3,7 @@ create table if not exists problem(
     label text,
     description text,
     color text,
+    depots json,
     costs json,
     display json
 );

@@ -18,8 +18,7 @@ from starlette.websockets import WebSocket
 
 from backend.models import Problem
 from backend.parsers import tsplib_parse
-from backend.populations import (generate_population, rotate_population,
-                                 two_opt_population)
+from backend.populations import generate_population
 from backend.utils import prettify_sql
 
 from . import repo
@@ -57,23 +56,21 @@ async def list_populations(req: Request):
 
 async def add_population(req: Request):
     payload = await req.json()
-    size = payload.get('size', 50)
+    label = payload['label']
     problem_id = payload.get('problem_id', None)
+    size = int(payload['size'])
+    num_salesmen = int(payload['num_salesmen'])
     two_opt = payload.get('two_opt', False)
-    num_salesmen = payload.get('num_salesmen', False)
     rotate = payload.get('rotate', False)
     if problem_id is None:
         raise
     problem = await repo.get_problem(req.app.state.db, problem_id)
-    population = generate_population(problem, size=size, two_opt=two_opt)
+    population = generate_population(problem, num_salesmen, size)
+    population.label = label
     population.problem_id = problem_id
     population.problem = problem
-    if two_opt:
-        population = two_opt_population(population)
-    if rotate:
-        population = rotate_population(population)
     print(population)
-    repo.add_population(req.app.state.db, population)
+    # repo.add_population(req.app.state.db, population)
     return JSONResponse(population)
 
 async def remove_population(req: Request):
