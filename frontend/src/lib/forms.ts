@@ -142,7 +142,17 @@ export function model<T>(el: any, value: Model<T>) {
       }
     }
   } else if (tag === 'select') {
-    console.log('should attach');
+    console.log('select!');
+    const options = [...el.querySelectorAll('option')];
+    if (options.some(option => option.value == getter())) {
+      options.forEach(option => {
+        if (option.value === getter()) {
+          option.selected = true;
+          return;
+        }
+        option.selected = false;
+      });
+    }
     el.addEventListener("input", fromEvent(setter));
   }
 }

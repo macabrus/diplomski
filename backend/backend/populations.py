@@ -1,6 +1,7 @@
 
 import random
 import sys
+
 from backend.constrained_random import ConstrainedRandom
 from backend.models import Fitness, Population, Problem, Solution, Tour
 
@@ -19,9 +20,12 @@ def generate_population(problem: Problem, salesmen: int, size: int) -> Populatio
         index = 0
         phenotype = []
         for share in shares:
-            salesman = Tour(depot=problem.depots[0]) # currently only single starting depot :(
+            salesman = Tour(depot=random.sample(problem.depots, 1)[0]) # currently only single starting depot :(
             salesman.tour = perm[index:index+share]
-            salesman.tour = two_opt(problem, salesman.tour)
+            if False: # two opt?
+                salesman.tour = two_opt(problem, salesman.tour)
+            if False: # choose best depot per salesman?
+                salesman.tour, salesman.depot = rotate_depots(problem, salesman.tour)
             phenotype.append(salesman)
             index += share
         solution = Solution(phenotype=phenotype)
@@ -31,6 +35,7 @@ def generate_population(problem: Problem, salesmen: int, size: int) -> Populatio
         assert index == len(problem.costs)
         pop.individuals.append(solution)
     return pop
+
 
 def two_opt(problem: Problem, tour: list[int]) -> list[int]:
     n = len(tour)
@@ -55,6 +60,14 @@ def two_opt(problem: Problem, tour: list[int]) -> list[int]:
                     found_improvement = True
     return tour
 
+# rotates start and end of tour to match the closest depot
+def rotate_depots(problem: Problem, tour: list[int]) -> tuple[list[int], int]:
+    best_depot = problem.depots[0]
+    for depot in problem.depots:
+        for node in tour:
+            ...
+    return tour, random.sample(problem.depots, 1)[0]
+
 def eval_fitness(problem: Problem, solution: Solution) -> Fitness:
     if solution.fitness:
         return
@@ -75,7 +88,7 @@ def tour_length(problem: Problem, home: int, path: list[int], with_home=True):
     for i in range(len(path) - 1):
         total += problem.costs[path[i]][path[i+1]]
     return total
-    
+
 
 def rotate_population(population: Population):
     ...

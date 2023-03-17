@@ -28,15 +28,16 @@ interface Population {
 
 const Populations: Component = () => {
   const [populations, setPopulations] = createSignal<PopulationPreview[]>([]);
-  createResource(async () => {
-    const res = await fetch('/api/population');
+  const [_, {refetch}] = createResource(async () => {
+    const res = await fetch('/api/population?format=short');
     setPopulations(await res.json());
   });
 
   async function remove(id: number) {
-    await fetch(`/population/${id}`, {
+    await fetch(`/api/population/${id}`, {
       method: "DELETE",
     });
+    await refetch();
   }
   return (
     <>

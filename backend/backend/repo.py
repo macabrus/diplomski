@@ -82,7 +82,7 @@ async def has_active_depenendent_runs(db: Connection, problem_id: int):
     return bool(await db.fetchall())
 
 
-async def add_population(db: Connection, problem_id: int, population: Population):
+async def add_population(db: Connection, population: Population) -> Population:
     sql = f'''
     insert into population(
     {csv_keys(Population, skip=('id', 'problem'))}
@@ -93,9 +93,9 @@ async def add_population(db: Connection, problem_id: int, population: Population
     async with db.cursor() as cur:
         if await has_population_label(cur, population.label):
             raise
-        #await cur.execute(sql, unstructure(population))
-        #rows = await cur.fetchall()
-        return []
+        await cur.execute(sql, unstructure(population))
+        population.id = (await cur.fetchall())[0]['id']
+        return population
 
 
 async def has_population_label(db: Cursor, label: str):
@@ -103,9 +103,9 @@ async def has_population_label(db: Cursor, label: str):
     await db.execute(sql, (label, ))
     return bool(await db.fetchall())
 
-async def remove_population(db: Connection, pop_id: int):
+async def remove_population(db: Connection, pop_id: int) -> Population | None:
     sql = 'delete from population where id = ?'
-    db.execute_fetchall(sql, (pop_id,))
+    return await db.execute_fetchall(sql, (pop_id,))
 
 # lists only label and id of population
 async def list_populations_short(db: Connection) -> list[ShortPopulation]:

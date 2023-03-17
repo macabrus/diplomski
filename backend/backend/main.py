@@ -6,7 +6,6 @@ from datetime import time
 
 import aiofiles
 import aiosqlite
-from backend.dtos import ShortPopulation
 from cattrs import register_structure_hook, unstructure
 from starlette.applications import Starlette
 from starlette.endpoints import WebSocketEndpoint
@@ -16,13 +15,13 @@ from starlette.routing import Route, WebSocketRoute
 from starlette.types import Receive, Scope, Send
 from starlette.websockets import WebSocket
 
+from backend.dtos import ShortPopulation
 from backend.models import Problem
 from backend.parsers import tsplib_parse
 from backend.populations import generate_population
 from backend.utils import prettify_sql
 
 from . import repo
-
 
 DB = 'app.db'
 
@@ -51,6 +50,7 @@ async def list_populations(req: Request):
     format = req.query_params.get('format', None)
     if format == 'short':
         populations = await repo.list_populations_short(req.app.state.db)
+        print(populations)
         return JSONResponse(unstructure(populations))
     return JSONResponse([])
 
@@ -70,12 +70,33 @@ async def add_population(req: Request):
     population.problem_id = problem_id
     population.problem = problem
     print(population)
-    # repo.add_population(req.app.state.db, population)
-    return JSONResponse(population)
+    await repo.add_population(req.app.state.db, population)
+    return JSONResponse(unstructure(population))
 
 async def remove_population(req: Request):
-    id = req.path_params['id']
-    repo.remove_population(req.app.state.db, id)
+    id = int(req.path_params['id'])
+    return JSONResponse(await repo.remove_population(req.app.state.db, id))
+
+async def list_runs():
+    raise NotImplemented
+
+async def add_run():
+    raise NotImplemented
+
+async def remove_run():
+    raise NotImplemented
+
+async def start_run():
+    raise NotImplemented
+
+async def pause_run():
+    raise NotImplemented
+
+async def cancel_run():
+    raise NotImplemented
+
+async def list_runners():
+    raise NotImplemented
 
 @asynccontextmanager
 async def lifespan(app: Starlette):
@@ -148,12 +169,29 @@ async def handle_ws(scope: Scope, receive: Receive, send: Send):
 app = Starlette(
     debug=True,
     routes=[
+        # problem api
         Route('/problem', add_problem, methods=['POST']),
         Route('/problem', list_problems, methods=['GET']),
         Route('/problem/{id}', remove_problem, methods=['DELETE']),
+
+        # population api
         Route('/population', list_populations, methods=['GET']),
         Route('/population', add_population, methods=['POST']),
         Route('/population/{id}', remove_population, methods=['DELETE']),
+
+        # run api
+        Route('/run', list_runs, methods=['GET']),
+        Route('/run', add_run, methods=['POST']),
+        Route('/run/{id}', remove_run, methods=['DELETE']),
+
+        # run management
+        Route('/run/{id}/start', start_run, methods=['PUT']),
+        Route('/run/{id}/pause', pause_run, methods=['PUT']),
+        Route('/run/{id}/cancel', cancel_run, methods=['PUT']),
+
+        # api for listing available workers
+        Route('/runner', list_runners, methods=['GET']),
+
         WebSocketRoute('/stream', StreamEndpoint)
     ],
     lifespan=lifespan
