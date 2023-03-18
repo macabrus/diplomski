@@ -11,6 +11,7 @@ const RunForm = lazy(() => import("./pages/RunForm"));
 const ProblemForm = lazy(() => import("./pages/ProblemForm"));
 const Populations = lazy(() => import("./pages/PopulationList"));
 const PopulationForm = lazy(() => import("./pages/PopulationForm"));
+const WorkerList = lazy(() => import("./pages/WorkerList"));
 
 const App: Component = () => {
   function hl(path: string) {
@@ -53,6 +54,11 @@ const App: Component = () => {
                 </Link>
               </li>
               <li class="nav-item">
+                <Link class="nav-link" href="/worker">
+                  Workers
+                </Link>
+              </li>
+              <li class="nav-item">
                 <Link class="nav-link" href="/archive">
                   Archive
                 </Link>
@@ -70,6 +76,7 @@ const App: Component = () => {
           <Route path="/population/new" component={PopulationForm} />
           <Route path="/run" component={RunList} />
           <Route path="/run/new" component={RunForm} />
+          <Route path="/worker" component={WorkerList} />
           <Route path="/archive" element={<div>Archive of old runs</div>} />
         </Routes>
       </main>

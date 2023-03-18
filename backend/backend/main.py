@@ -80,8 +80,8 @@ async def remove_population(req: Request):
     id = int(req.path_params['id'])
     return JSONResponse(await repo.remove_population(req.app.state.db, id))
 
-async def list_runs():
-    raise NotImplemented
+async def list_runs(req: Request):
+    return JSONResponse([])
 
 async def add_run(req: Request):
     payload = await req.json()
