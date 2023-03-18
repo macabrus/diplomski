@@ -14,6 +14,7 @@ interface Individual {
 }
 
 interface PopulationPreview {
+  id: number
   name: string;
   problem: string;
   size: number;

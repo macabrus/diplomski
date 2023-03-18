@@ -5,24 +5,37 @@ import {
   createSignal,
   For,
 } from "solid-js";
-import { numModel } from "../lib/forms";
+import { model, numModel } from "../lib/forms";
 import { Population } from "../models/problem";
 
 const [label, setLabel] = createSignal("");
 const [popId, setPopId] = createSignal(-1);
-const [mutProb, setMutProb] = createSignal("0.05");
-const [sharingFreq, setSharingFreq] = createSignal("0.05");
-// const []
+const [mutProb, setMutProb] = createSignal(0.05);
+const [sharingFreq, setSharingFreq] = createSignal(0.05);
+const [maxIter, setMaxIter] = createSignal(1000);
+const [maxSteadyGen, setMaxSteadyGen] = createSignal(1000);
+
+/* dummy select option */
+const dummy = {
+  id: -1,
+  selected: true,
+  disabled: true,
+  label: "Select Population",
+};
+
 const RunForm: Component = () => {
-  const [populations, setPopulations] = createSignal([] as Population[]);
-  createResource(async () => {
+  const [populations] = createResource(async () => {
     const res = await fetch("/api/population?format=short");
-    setPopulations(await res.json());
+    const data = [dummy, ...(await res.json())];
     /* If population was removed in the meantime, reset it to -1 */
-    if (!populations().some((pop) => pop.id == popId())) {
-      console.log("oops");
-      setPopId(-1);
-    }
+    data.forEach((pop) => {
+      if (pop.id === popId()) {
+        pop.selected = true;
+      } else {
+        pop.selected = false;
+      }
+    });
+    return data;
   });
 
   const form = createMemo(() => {
@@ -31,31 +44,129 @@ const RunForm: Component = () => {
       population_id: popId(),
       mutation_probability: mutProb(),
       sharing_frequency: sharingFreq(),
+      max_iter: maxIter(),
+      max_steady_generations: maxSteadyGen()
     };
     console.log(form);
     return form;
   });
 
   async function submit() {
-    await fetch('/api/run', {
-      method: 'POST',
-      body: JSON.stringify(form())
+    await fetch("/api/run", {
+      method: "POST",
+      body: JSON.stringify(form()),
     });
   }
 
   return (
     <form class="p-3 rounded shadow-sm bg-white">
+      {/* Label */}
+      <div class="col-auto mb-3">
+        <label for="label" class="form-label">
+          Label
+        </label>
+        <input
+          type="text"
+          use:model={[label, setLabel]}
+          class="form-control"
+          id="label"
+          aria-describedby="label-help"
+        />
+        <div id="label-help" class="form-text">
+          Optional
+        </div>
+      </div>
+
       {/* SELECT POPULATION TO USE IN THIS RUN (IMPLIES A PROBLEM) */}
       <select class="form-select" use:numModel={[popId, setPopId]}>
-        <option value="-1" selected disabled>
-          Select Population
-        </option>
         <For each={populations()}>
-          {(pop) => <option value={pop.id}>{pop.label}</option>}
+          {(pop) => (
+            <option
+              selected={pop.selected}
+              disabled={pop.disabled}
+              value={pop.id}>
+              {pop.label}
+            </option>
+          )}
         </For>
       </select>
 
       {/* MUTATION PROBABILITY */}
+      <div class="mb-3">
+        <label for="customRange1" class="form-label">
+          Mutation probability:
+        </label>
+        <input
+          type="range"
+          use:numModel={[mutProb, setMutProb]}
+          class="form-range"
+          id="size"
+          aria-describedby="size-help"
+          min="0"
+          max="1"
+          step="0.001"></input>
+        <div id="two-opt-help" class="form-text">
+          {mutProb()}
+        </div>
+      </div>
+
+      {/* SHARING FREQUENCY */}
+      <div class="mb-3">
+        <label for="customRange1" class="form-label">
+          Sharing frequency:
+        </label>
+        <input
+          type="range"
+          use:numModel={[sharingFreq, setSharingFreq]}
+          class="form-range"
+          id="size"
+          aria-describedby="size-help"
+          min="0"
+          max="1"
+          step="0.001"></input>
+        <div id="two-opt-help" class="form-text">
+          {sharingFreq()}
+        </div>
+      </div>
+
+      {/* MAX ITER? */}
+      <div class="mb-3">
+        <label for="customRange1" class="form-label">
+          Maximum Number of Iterations:
+        </label>
+        <input
+          type="range"
+          use:numModel={[maxIter, setMaxIter]}
+          class="form-range"
+          id="size"
+          aria-describedby="size-help"
+          min="1"
+          max="1000000"
+          step="1"></input>
+        <div id="two-opt-help" class="form-text">
+          {maxIter().toLocaleString()}
+        </div>
+      </div>
+
+      {/* MAX STEADY GENERATIONS? */}
+      <div class="mb-3">
+        <label for="customRange1" class="form-label">
+          Maximum Number of Steady Generations before Termination
+        </label>
+        <input
+          type="range"
+          use:numModel={[maxSteadyGen, setMaxSteadyGen]}
+          class="form-range"
+          id="size"
+          aria-describedby="size-help"
+          min="1"
+          max="1000"
+          step="1"></input>
+        <div id="two-opt-help" class="form-text">
+          {maxSteadyGen().toLocaleString()}
+        </div>
+      </div>
+
       <h3>Run configuration</h3>
       <ul>
         <li>Mutation probability</li>
@@ -66,7 +177,11 @@ const RunForm: Component = () => {
       </ul>
 
       <div class="row justify-content-center">
-        <button onclick={submit} class="btn btn-primary" type="button">
+        <button
+          disabled={popId() === -1}
+          onclick={submit}
+          class="btn btn-primary"
+          type="button">
           Submit
         </button>
       </div>
@@ -74,17 +189,9 @@ const RunForm: Component = () => {
   );
 };
 
-/* https://stackoverflow.com/a/175787 */
-function isNumeric(str: any) {
-  if (typeof str != "string") return false; // we only process strings!
-  return (
-    !isNaN(str) && // use type coercion to parse the _entirety_ of the string (`parseFloat` alone does not do this)...
-    !isNaN(parseFloat(str))
-  ); // ...and ensure strings of whitespace fail
-}
-
 export default RunForm;
 
 const _ = {
+  model,
   numModel,
 };

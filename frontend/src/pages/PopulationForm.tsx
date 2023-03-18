@@ -77,9 +77,9 @@ const PopulationForm: Component = () => {
       </div>
 
       <div class="mb-3">
-      <label for="customRange1" class="form-label">
-        Population Size:
-      </label>
+        <label for="customRange1" class="form-label">
+          Population Size:
+        </label>
         <input
           type="range"
           use:numModel={[size, setSize]}
@@ -93,7 +93,7 @@ const PopulationForm: Component = () => {
           {size()}
         </div>
       </div>
-      
+
       <select class="form-select" use:numModel={[problemId, setProblemId]}>
         <option selected disabled>
           Select Problem

@@ -1,4 +1,10 @@
-import { Accessor, createRenderEffect, Setter, Signal } from "solid-js";
+import {
+  Accessor,
+  createRenderEffect,
+  onMount,
+  Setter,
+  Signal,
+} from "solid-js";
 import { DOMElement } from "solid-js/jsx-runtime";
 
 declare module "solid-js" {
@@ -39,7 +45,6 @@ function fileFromEvent(setter: (val: any) => void) {
   };
 }
 
-
 // function blobModel(el: any, value: () => [Accessor<>])
 function boolFromEvent(setter: Setter<boolean>) {
   return function (e: any) {
@@ -57,16 +62,24 @@ function intFromEvent(setter: Setter<number>) {
     if (el.type && el.type === "checkbox") {
       return setter(el.checked);
     }
-    return setter(Number.parseInt(e.currentTarget.value));
+    const val = e.currentTarget.value * 1;
+    if (!Number.isNaN(val)) {
+      setter(val);
+    }
   };
 }
 type Model<T> = () => [() => T, (val: T) => void];
-type UploadDescriptor = {name: string, type: string, size: number, content: string};
+type UploadDescriptor = {
+  name: string;
+  type: string;
+  size: number;
+  content: string;
+};
 type FileModel = Model<UploadDescriptor[]>;
 
 export function numModel(el: any, value: Model<number>) {
   const [getter, setter] = value();
-  return model(el, () => [getter, (val) => setter(Number.parseInt(val as any))]);
+  return model(el, () => [getter, (val) => setter(+val)]);
 }
 
 export function boolModel(el: any, value: Model<boolean>) {
@@ -90,7 +103,10 @@ export function fileModel(el: any, value: FileModel) {
     }
     return descriptors;
   }
-  return model(el, () => [getter, async (val) => setter(await fileParser(val))])
+  return model(el, () => [
+    getter,
+    async (val) => setter(await fileParser(val)),
+  ]);
 }
 
 export function model<T>(el: any, value: Model<T>) {
@@ -141,11 +157,12 @@ export function model<T>(el: any, value: Model<T>) {
         break;
       }
     }
-  } else if (tag === 'select') {
-    console.log('select!');
-    const options = [...el.querySelectorAll('option')];
-    if (options.some(option => option.value == getter())) {
-      options.forEach(option => {
+  } else if (tag === "select") {
+    console.log("select!");
+    const options = [...el.querySelectorAll("option")];
+    if (options.some((option) => option.value == getter())) {
+      options.forEach((option) => {
+        console.log(option.value);
         if (option.value === getter()) {
           option.selected = true;
           return;
@@ -153,6 +170,7 @@ export function model<T>(el: any, value: Model<T>) {
         option.selected = false;
       });
     }
-    el.addEventListener("input", fromEvent(setter));
+    el.addEventListener("change", console.log);
+    el.addEventListener("change", fromEvent(setter));
   }
 }

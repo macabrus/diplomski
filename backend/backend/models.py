@@ -70,7 +70,7 @@ class EvolutionConfig:
 class EvolutionState:
     generation: int
     iteration: int
-    population: list[Solution]
+    population: Population
 
 @define(kw_only=True)
 class Metrics:
@@ -83,10 +83,22 @@ class Status(Enum):
     FINISHED = 'FINISHED'
 
 @define(kw_only=True)
-class Run:
+class Runner:
     id: int
-    status: Status
-    problem: Problem
+    ip: str
+    port: int
+    slots: int
+    used_slots: int
+
+@define(kw_only=True)
+class Run:
+    id: int = None
+    problem_id: int = None
+    config_id: int = None
+    population_id: int = None
+
+    status: Status = Status.PENDING
+    problem: Problem = None
     state: EvolutionState
-    config: EvolutionConfig
-    metrics: Metrics
+    config: EvolutionConfig = None
+    metrics: Metrics = Metrics

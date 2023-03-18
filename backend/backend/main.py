@@ -3,10 +3,11 @@ import json
 import sqlite3
 from contextlib import asynccontextmanager
 from datetime import time
+from uuid import uuid4
 
 import aiofiles
 import aiosqlite
-from cattrs import register_structure_hook, unstructure
+from cattrs import register_structure_hook, unstructure, structure
 from starlette.applications import Starlette
 from starlette.endpoints import WebSocketEndpoint
 from starlette.requests import Request
@@ -16,7 +17,7 @@ from starlette.types import Receive, Scope, Send
 from starlette.websockets import WebSocket
 
 from backend.dtos import ShortPopulation
-from backend.models import Problem
+from backend.models import Problem, Run, Runner
 from backend.parsers import tsplib_parse
 from backend.populations import generate_population
 from backend.utils import prettify_sql
@@ -37,7 +38,9 @@ async def add_problem(req: Request):
     problem.label = payload.get('label', problem.label)
     problem.color = payload.get('color', problem.color)
     problem.description = payload.get('description', problem.description)
-    return JSONResponse(unstructure(await repo.add_problem(req.app.state.db, problem)))
+    return JSONResponse(
+        unstructure(await repo.add_problem(req.app.state.db, problem))
+    )
 
 async def remove_problem(req: Request):
     removed = await repo.remove_problem(req.app.state.db, req.path_params['id'])
@@ -80,8 +83,11 @@ async def remove_population(req: Request):
 async def list_runs():
     raise NotImplemented
 
-async def add_run():
-    raise NotImplemented
+async def add_run(req: Request):
+    payload = await req.json()
+    print(payload)
+    await repo.add_run(req.app.state.db, Run())
+    return JSONResponse({})
 
 async def remove_run():
     raise NotImplemented
@@ -95,11 +101,13 @@ async def pause_run():
 async def cancel_run():
     raise NotImplemented
 
-async def list_runners():
-    raise NotImplemented
+async def list_runners(req: Request):
+    return JSONResponse(req.app.state.runners)
 
 @asynccontextmanager
 async def lifespan(app: Starlette):
+    print('Initialize runner slots')
+    app.state.runners: list[Runner] = []
     print(f"Connecting to local db: {DB}")
     async with aiosqlite.connect(DB, detect_types=sqlite3.PARSE_DECLTYPES) as db:
         await db.set_trace_callback(lambda sql: print(prettify_sql(sql)))
@@ -134,6 +142,10 @@ class StreamEndpoint(WebSocketEndpoint):
             self.subs[run_id] = [c for c in clients if c['ws'] is not ws]
             if not self.subs[run_id]:
                 self.subs.pop(run_id)
+        for i, runner in enumerate(ws.app.state.runners):
+            if runner.ip == ws.client.host and runner.port == ws.client.port:
+                ws.app.state.runners.pop(i)
+                break
         print(f"[{time()}] disconnected: {ws.client} with code: {close_code}")
     
     async def on_receive(self, ws: WebSocket, message: dict) -> None:
@@ -149,8 +161,13 @@ class StreamEndpoint(WebSocketEndpoint):
                 for sub in self.subs.get(message['run_id'], empty_list):
                     if sub['offset'] < message['index']:
                         await sub['ws'].send_json(message)
-            case 'checkpoint':
-                pass  # persist state from message back into db
+            case 'runner':
+                runners = ws.app.state.runners
+                if message['action'] == 'register':
+                    runner = {**message, 'ip': ws.client.host, 'port': ws.client.port}
+                    runners.append(structure(runner, Runner))
+            case _:
+                raise ValueError(f'Unknown message: {message}')
 
 # propagates incomming messages from producer processes to interested
 # clients on the frontend
@@ -192,6 +209,7 @@ app = Starlette(
         # api for listing available workers
         Route('/runner', list_runners, methods=['GET']),
 
+        # for tracking runners and clients
         WebSocketRoute('/stream', StreamEndpoint)
     ],
     lifespan=lifespan

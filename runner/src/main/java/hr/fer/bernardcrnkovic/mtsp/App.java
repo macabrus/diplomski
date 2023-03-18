@@ -14,7 +14,7 @@ import jakarta.websocket.ClientEndPoint;
  */
 public class App {
     public static void main(String[] args) {
-        /* Connect to  */
+        /* Runner implementation to receive EvolutionState and execute it until paused */
         WebSocketClient client = new WebSocketClient();
         // Use a standard, HTTP/1.1, HttpClient.
         HttpClient httpClient = new HttpClient();
@@ -27,11 +27,10 @@ public class App {
         // receives WebSocket messages from the server.
         ClientEndPoint clientEndPoint = new ClientEndPoint();
         // The server URI to connect to.
-        URI serverURI = URI.create("ws://domain.com/path");
+        URI serverURI = URI.create("wss://127.0.0.1/api/stream");
 
         // Connect the client EndPoint to the server.
         CompletableFuture<Session> clientSessionPromise = webSocketClient.connect(clientEndPoint, serverURI);
-
     }
     // public static void main(String[] args) {
     //     System.out.println("Hello World!");
