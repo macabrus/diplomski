@@ -84,11 +84,10 @@ class Status(Enum):
 
 @define(kw_only=True)
 class Runner:
-    id: int
     ip: str
     port: int
     slots: int
-    used_slots: int
+    used_slots: int = 0
 
 @define(kw_only=True)
 class Run:

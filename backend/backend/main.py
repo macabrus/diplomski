@@ -104,6 +104,10 @@ async def cancel_run():
 async def list_runners(req: Request):
     return JSONResponse(req.app.state.runners)
 
+# invoked by runners only with evolution state as body
+async def save_evolution(req: Request):
+    ...
+
 @asynccontextmanager
 async def lifespan(app: Starlette):
     print('Initialize runner slots')
@@ -205,6 +209,8 @@ app = Starlette(
         Route('/run/{id}/start', start_run, methods=['PUT']),
         Route('/run/{id}/pause', pause_run, methods=['PUT']),
         Route('/run/{id}/cancel', cancel_run, methods=['PUT']),
+
+        Route('/evolution/{id}', save_evolution, methods=['PUT']),
 
         # api for listing available workers
         Route('/runner', list_runners, methods=['GET']),

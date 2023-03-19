@@ -1,83 +1,49 @@
 package hr.fer.bernardcrnkovic.mtsp;
 
-import java.net.URI;
-import java.util.concurrent.CompletableFuture;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.jetty.client.HttpClient;
+import org.eclipse.jetty.client.dynamic.HttpClientTransportDynamic;
+import org.eclipse.jetty.io.ClientConnector;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.websocket.api.Session;
+import org.eclipse.jetty.websocket.api.WebSocketAdapter;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
-import jakarta.websocket.ClientEndPoint;
+
+import java.net.URI;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Server setup
- *
  */
 public class App {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         /* Runner implementation to receive EvolutionState and execute it until paused */
-        WebSocketClient client = new WebSocketClient();
-        // Use a standard, HTTP/1.1, HttpClient.
-        HttpClient httpClient = new HttpClient();
+        SslContextFactory.Client sec = new SslContextFactory.Client();
+        sec.setTrustAll(true);
 
-        // Create and start WebSocketClient.
-        WebSocketClient webSocketClient = new WebSocketClient(httpClient);
-        webSocketClient.start();
+        /* https://stackoverflow.com/a/67176246 */
+        ClientConnector clientConnector = new ClientConnector();
+        clientConnector.setSslContextFactory(sec);
 
-        // The client-side WebSocket EndPoint that
-        // receives WebSocket messages from the server.
-        ClientEndPoint clientEndPoint = new ClientEndPoint();
-        // The server URI to connect to.
-        URI serverURI = URI.create("wss://127.0.0.1/api/stream");
+        /* https://github.com/jetty-project/embedded-jetty-websocket-examples/blob/10.0.x/native-jetty-websocket-example/src/main/java/org/eclipse/jetty/demo/EventClient.java */
+        HttpClient client = new HttpClient(new HttpClientTransportDynamic(clientConnector));
+        //client.start();
+        WebSocketClient ws = new WebSocketClient(client);
+        ws.start();
 
-        // Connect the client EndPoint to the server.
-        CompletableFuture<Session> clientSessionPromise = webSocketClient.connect(clientEndPoint, serverURI);
+        Session session = ws.connect(new WebSocketAdapter(), URI.create("wss://127.0.0.1/api/stream")).get();
+
+        ObjectMapper mapper = new ObjectMapper();
+
+        /* Register as Worker */
+        // session.getRemote().sendString("{\"type\": \"Hello!\"} ");
+        session.getRemote().sendString(mapper.writeValueAsString(Map.of(
+            "type", "runner",
+            "action", "register",
+            "slots", Runtime.getRuntime().availableProcessors()
+        )));
+
+        ws.stop();
     }
-    // public static void main(String[] args) {
-    //     System.out.println("Hello World!");
-    //     Javalin javalin = Javalin.create((config) -> {
-    //         config.plugins.register((app) -> {
-    //             var jdbi = Jdbi.create("jdbc:sqlite:app.db?journal_mode=WAL");
-    //             jdbi.installPlugin(new SqlObjectPlugin());
-    //             jdbi.registerRowMapper(BeanMapper.factory(Problem.class));
-    //             app.attribute("db", jdbi);
-    //             app.before(ctx -> {
-    //                 ctx.attribute("db", jdbi);
-    //             });
-    //         });
-    //     });
-    //     var api = new Api();
-    //     javalin.post("/problem/new", api::addProblem);
-    //     javalin.delete("/problem/{id}", api::removeProblem);
-    //     javalin.events(e -> {
-    //         e.serverStarting(() -> {
-    //             Jdbi db = javalin.attribute("db");
-    //             db.useTransaction(txn -> {
-    //                 txn.createScript(
-    //                     Files.readString(
-    //                         Paths.get(
-    //                             App.class.getClassLoader()
-    //                             .getResource("schema.sql")
-    //                             .toURI()
-    //                         )
-    //                     )
-    //                 ).execute();
-    //             });
-    //         });
-    //         e.serverStopped(() -> {
-    //             Jdbi db = javalin.attribute("db");
-    //             db.useTransaction(txn -> {
-    //                 txn.createScript(
-    //                     Files.readString(
-    //                         Paths.get(
-    //                             App.class.getClassLoader()
-    //                             .getResource("drop.sql")
-    //                             .toURI()
-    //                         )
-    //                     )
-    //                 ).execute();
-    //             });
-    //         });
-    //     });
-    //     javalin.start(8080);
-    // }
 }

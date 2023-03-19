@@ -14,6 +14,7 @@ const WorkerList: Component = () => {
     return data;
   });
 
+
   return (
     <>
       <p>List of registered workers for running evolution loops</p>
