@@ -16,6 +16,9 @@
   },
   "dependencies": {
     "@solidjs/router": "^0.7.0",
+    "chart.js": "^4.2.1",
+    "chartjs-adapter-date-fns": "^3.0.0",
+    "date-fns": "^2.29.3",
     "solid-js": "^1.6.10"
   }
 }

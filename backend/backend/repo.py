@@ -1,11 +1,11 @@
-from unittest import skip
 
 from aiosqlite import Connection, Cursor
-from attr import asdict, astuple
 from attrs import fields
-from backend.dtos import ShortPopulation
 from cattrs import structure, unstructure
-from .models import EvolutionState, Population, Problem, Run, Solution
+
+from backend.dtos import ShortPopulation
+
+from .models import EvolutionState, Population, Problem, Run
 
 
 def csv_slots(model, skip=set()):
@@ -30,16 +30,16 @@ def filter_keys(obj, keys=set()):
     return obj
 
 async def add_problem(db: Connection,  problem: Problem) -> Problem:
+    sql = f'''
+    insert into problem({
+        csv_keys(Problem, skip=('id',))
+    })
+    values ({csv_slots(Problem, skip=('id',))})
+    returning id
+    '''
     async with db.cursor() as cur:
         if await has_problem_label(cur, problem.label):
             raise
-        sql = f'''
-            insert into problem({
-                csv_keys(Problem, skip=('id',))
-            })
-            values ({csv_slots(Problem, skip=('id',))})
-            returning id
-        '''
         await cur.execute(sql, unstructure(problem))
         problem.id = (await cur.fetchall())[0]['id']
         return problem
@@ -50,10 +50,10 @@ async def has_problem_label(db: Connection, name: str) -> bool:
     return bool(await db.fetchall())
 
 async def remove_problem(db: Connection, id: int) -> Problem | None:
+    sql = 'delete from problem where id = ? returning *'
     async with db.cursor() as cur:
         if await has_active_depenendent_runs(cur, id):
             raise
-        sql = 'delete from problem where id = ? returning *'
         await cur.execute(sql, (id,))
         rows = await cur.fetchall()
         if not rows:
@@ -97,7 +97,6 @@ async def add_population(db: Connection, population: Population) -> Population:
         population.id = (await cur.fetchall())[0]['id']
         return population
 
-
 async def has_population_label(db: Cursor, label: str):
     sql = 'select 1 from population where id = ?'
     await db.execute(sql, (label, ))
@@ -107,6 +106,14 @@ async def remove_population(db: Connection, pop_id: int) -> Population | None:
     sql = 'delete from population where id = ?'
     return await db.execute_fetchall(sql, (pop_id,))
 
+async def get_population(db: Connection, pop_id: int) -> Population | None:
+    sql = 'select * from population where id = ?'
+    await db.execute(sql,(pop_id,))
+    rows = await db.fetchall()
+    if not rows:
+        return None
+    return structure(rows[0], Population)
+
 # lists only label and id of population
 async def list_populations_short(db: Connection) -> list[ShortPopulation]:
     sql = 'select id, label from population'
@@ -114,16 +121,20 @@ async def list_populations_short(db: Connection) -> list[ShortPopulation]:
     return list(map(lambda row: structure(row, ShortPopulation), rows))
 
 async def add_run(db: Connection,  run: Run):
+    sql = f'''
+    insert into run(
+    {csv_keys(Run, skip=('problem',))})
+    values (
+    {csv_slots(Run, skip=('problem',))})
+    returning id
+    '''
     async with db.cursor() as cur:
-        sql = f'''
-        insert into run(
-        {csv_keys(Run, skip=('problem',))})
-        values (
-        {csv_slots(Run, skip=('problem',))})
-        returning id
-        '''
+        population = await get_population()
+        problem = population.problem
         await cur.execute(sql, unstructure(run))
-        await cur.fetchall()
+        rows = await cur.fetchall()
+        assert len(rows) == 1
+        return structure(rows[0] | {'problem': problem, 'population': population}, Run)
 
 # removes run
 async def remove_run(db: Connection, id: int):

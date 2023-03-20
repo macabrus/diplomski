@@ -17,7 +17,7 @@ from starlette.types import Receive, Scope, Send
 from starlette.websockets import WebSocket
 
 from backend.dtos import ShortPopulation
-from backend.models import Problem, Run, Runner
+from backend.models import Problem, Run, Worker
 from backend.parsers import tsplib_parse
 from backend.populations import generate_population
 from backend.utils import prettify_sql
@@ -101,8 +101,8 @@ async def pause_run():
 async def cancel_run():
     raise NotImplemented
 
-async def list_runners(req: Request):
-    return JSONResponse(req.app.state.runners)
+async def list_workers(req: Request):
+    return JSONResponse(unstructure(req.app.state.workers))
 
 # invoked by runners only with evolution state as body
 async def save_evolution(req: Request):
@@ -111,14 +111,14 @@ async def save_evolution(req: Request):
 @asynccontextmanager
 async def lifespan(app: Starlette):
     print('Initialize runner slots')
-    app.state.runners: list[Runner] = []
+    app.state.workers: list[Worker] = []
+    aiosqlite.register_adapter(dict, json.dumps)
+    aiosqlite.register_adapter(list, json.dumps)
+    aiosqlite.register_converter('json', json.loads)
     print(f"Connecting to local db: {DB}")
     async with aiosqlite.connect(DB, detect_types=sqlite3.PARSE_DECLTYPES) as db:
         await db.set_trace_callback(lambda sql: print(prettify_sql(sql)))
         await db.execute('pragma journal_mode = wal')
-        aiosqlite.register_adapter(dict, json.dumps)
-        aiosqlite.register_adapter(list, json.dumps)
-        aiosqlite.register_converter('json', json.loads)
         db.row_factory = aiosqlite.Row
         async with aiofiles.open('sql/schema.sql') as schema:
             await db.executescript(await schema.read())
@@ -146,9 +146,10 @@ class StreamEndpoint(WebSocketEndpoint):
             self.subs[run_id] = [c for c in clients if c['ws'] is not ws]
             if not self.subs[run_id]:
                 self.subs.pop(run_id)
-        for i, runner in enumerate(ws.app.state.runners):
-            if runner.ip == ws.client.host and runner.port == ws.client.port:
-                ws.app.state.runners.pop(i)
+        for i, runner in enumerate(ws.app.state.workers):
+            if runner.host == ws.client.host:
+                runner = ws.app.state.workers.pop(i)
+                print(f'removed runner: {runner}')
                 break
         print(f"[{time()}] disconnected: {ws.client} with code: {close_code}")
     
@@ -166,10 +167,10 @@ class StreamEndpoint(WebSocketEndpoint):
                     if sub['offset'] < message['index']:
                         await sub['ws'].send_json(message)
             case 'runner':
-                runners = ws.app.state.runners
+                workers = ws.app.state.workers
                 if message['action'] == 'register':
-                    runner = {**message, 'ip': ws.client.host, 'port': ws.client.port}
-                    runners.append(structure(runner, Runner))
+                    worker = {**message, 'host': ws.client.host}
+                    workers.append(structure(worker, Worker))
             case _:
                 raise ValueError(f'Unknown message: {message}')
 
@@ -213,7 +214,7 @@ app = Starlette(
         Route('/evolution/{id}', save_evolution, methods=['PUT']),
 
         # api for listing available workers
-        Route('/runner', list_runners, methods=['GET']),
+        Route('/worker', list_workers, methods=['GET']),
 
         # for tracking runners and clients
         WebSocketRoute('/stream', StreamEndpoint)

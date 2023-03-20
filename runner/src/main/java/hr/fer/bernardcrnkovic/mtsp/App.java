@@ -11,7 +11,6 @@ import org.eclipse.jetty.websocket.client.WebSocketClient;
 
 import java.net.URI;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Server setup
@@ -43,6 +42,7 @@ public class App {
             "action", "register",
             "slots", Runtime.getRuntime().availableProcessors()
         )));
+        Thread.sleep(10_000);
 
         ws.stop();
     }

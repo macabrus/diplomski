@@ -83,9 +83,8 @@ class Status(Enum):
     FINISHED = 'FINISHED'
 
 @define(kw_only=True)
-class Runner:
-    ip: str
-    port: int
+class Worker:
+    host: str
     slots: int
     used_slots: int = 0
 
