@@ -9,45 +9,95 @@ const RunView: Component = () => {
   // ws.onmessage = (message) => {
   //   messageHandler(JSON.parse(message.data));
   // }
+  const endDate = new Date();
+  endDate.setTime(endDate.getTime() + 3600); // 1 hour
   const data = {
-    labels: months({ count: 100 }),
     datasets: [
       {
-        label: "Metric 1",
-        data: numbers({ count: 100, min: -100, max: 100 }),
-        borderColor: CHART_COLORS.red,
-        backgroundColor: transparentize(CHART_COLORS.red, 0.5),
+        label: "Fitness",
+        // cubicInterpolation: true,
+        tension: 0.1,
+        data: [
+          {
+            x: "2023-03-21 15:09:01",
+            y: 10,
+          },
+          {
+            x: "2023-03-21 15:09:30",
+            y: 20,
+          },
+          {
+            x: "2023-03-21 15:09:31",
+            y: 30,
+          },
+        ],
       },
-      {
-        label: "Metric 2",
-        data: numbers({ count: 100, min: -100, max: 100 }),
-        borderColor: CHART_COLORS.blue,
-        backgroundColor: transparentize(CHART_COLORS.blue, 0.5),
-      },
+      // {
+      //   label: "Metric 1",
+      //   data: numbers({ count: 20, min: -100, max: 100 }),
+      //   borderColor: CHART_COLORS.red,
+      //   backgroundColor: transparentize(CHART_COLORS.red, 0.5),
+      //   cubicInterpolationMode: 'monotone',
+      //   tension: 1.0
+      // },
+      // {
+      //   label: "Metric 2",
+      //   data: numbers({ count: 20, min: -100, max: 100 }),
+      //   borderColor: CHART_COLORS.blue,
+      //   backgroundColor: transparentize(CHART_COLORS.blue, 0.5),
+      //   cubicInterpolationMode: 'monotone',
+      //   tension: 0.4
+      // },
+      // {
+      //   label: "Random 3",
+      //   data: dates({start: new Date(), end: endDate, step: 10000}),
+      //   borderColor: CHART_COLORS.blue,
+      //   backgroundColor: transparentize(CHART_COLORS.blue, 0.5),
+      //   cubicInterpolationMode: 'monotone',
+      //   tension: 0.4
+      // },
     ],
   };
   onMount(() => {
     console.log(data);
     Chart.register(...registerables);
     const chart = new Chart(chartRef, {
-      type: 'line',
+      type: "line",
       data: data,
       options: {
         interaction: { intersect: false },
         responsive: true,
         plugins: {
           legend: {
-            position: 'top',
+            position: "top",
           },
           title: {
             display: true,
-            text: 'Chart.js Line Chart'
-          }
-        }
+            text: "Fitness Chart",
+          },
+        },
+        showLine: true,
+        scales: {
+          y: {
+            beginAtZero: true
+          },
+          x: {
+            type: 'time',
+            time: {
+              unit: 'second',
+            },
+            ticks: {
+              maxTicksLimit: 10,
+              // autoSkip: true,
+              // stepSize: 1,
+              // source: 'data'
+            },
+          },
+        },
       },
     });
     console.log(chart);
-    setInterval(() => handleData(chart, {}), 500);
+    // setInterval(() => handleData(chart, {}), 500);
   });
 
   const params = useParams();
@@ -150,11 +200,32 @@ function months(config: any) {
   return values;
 }
 
+function dates(config: any) {
+  config = config || {};
+  let start = config.start?.getTime() || new Date().getTime();
+  let end;
+  let step = config.step || 1000; // 1 second is default
+  if (config.end) {
+    end = config.end?.getTime();
+  } else {
+    end = new Date(start);
+    end.setDate(end.getDate() + 1);
+  }
+  let i = start;
+  let dates = [];
+  while (i <= end) {
+    dates.push(new Date(i));
+    i += Math.random() * 10_000;
+  }
+  return dates;
+}
+
 function handleData(chart: Chart, message: any) {
   /* Add new Data */
   const data = chart.data;
   if (data.datasets.length > 0) {
-    data.labels = months({count: data.labels.length + 1});
+    console.log("append");
+    data.labels = months({ count: data.labels.length + 1 });
 
     for (let index = 0; index < data.datasets.length; ++index) {
       data.datasets[index].data.push(rand(-100, 100));
@@ -163,7 +234,7 @@ function handleData(chart: Chart, message: any) {
 
   /* Truncate tail of current data */
   chart.data.labels?.shift(); // remove the label first
-  chart.data.datasets.forEach(dataset => {
+  chart.data.datasets.forEach((dataset) => {
     dataset.data.shift();
   });
   chart.update();

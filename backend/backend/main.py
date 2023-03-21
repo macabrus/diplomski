@@ -1,3 +1,4 @@
+import asyncio
 import base64 as b64
 import json
 import sqlite3
@@ -7,7 +8,7 @@ from uuid import uuid4
 
 import aiofiles
 import aiosqlite
-from cattrs import register_structure_hook, unstructure, structure
+from cattrs import register_structure_hook, structure, unstructure
 from starlette.applications import Starlette
 from starlette.endpoints import WebSocketEndpoint
 from starlette.requests import Request
@@ -154,6 +155,7 @@ class StreamEndpoint(WebSocketEndpoint):
         print(f"[{time()}] disconnected: {ws.client} with code: {close_code}")
     
     async def on_receive(self, ws: WebSocket, message: dict) -> None:
+        print(f'received: {message}')
         match message['type']:
             case 'pub':
                 pass  # just trust it, todo: add some kind of sec check
