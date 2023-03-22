@@ -20,12 +20,14 @@ def generate_population(problem: Problem, salesmen: int, size: int) -> Populatio
         index = 0
         phenotype = []
         for share in shares:
-            salesman = Tour(depot=random.sample(problem.depots, 1)[0]) # currently only single starting depot :(
+            salesman = Tour(depot=random.sample(problem.depots, 1)[
+                            0])  # currently only single starting depot :(
             salesman.tour = perm[index:index+share]
-            if False: # two opt?
+            if False:  # two opt?
                 salesman.tour = two_opt(problem, salesman.tour)
-            if False: # choose best depot per salesman?
-                salesman.tour, salesman.depot = rotate_depots(problem, salesman.tour)
+            if False:  # choose best depot per salesman?
+                salesman.tour, salesman.depot = rotate_depots(
+                    problem, salesman.tour)
             phenotype.append(salesman)
             index += share
         solution = Solution(phenotype=phenotype)
@@ -49,24 +51,28 @@ def two_opt(problem: Problem, tour: list[int]) -> list[int]:
                 c2 = tour[j]
                 c3 = tour[(i + 1) % n]
                 c4 = tour[(j + 1) % n]
-                a = -problem.costs[c1][c3] #  -dist(c1, c3)
-                b = -problem.costs[c2][c4] #  -dist(c2, c4)
-                c =  problem.costs[c1][c2] #  dist(c1, c2)
-                d =  problem.costs[c3][c4] #  dist(c3, c4)
+                a = -problem.costs[c1][c3]  # -dist(c1, c3)
+                b = -problem.costs[c2][c4]  # -dist(c2, c4)
+                c = problem.costs[c1][c2]  # dist(c1, c2)
+                d = problem.costs[c3][c4]  # dist(c3, c4)
                 len_delta = a + b + c + d
                 if len_delta < -1e-4:
-                    tour[i+1:j+1] = reversed(tour[i+1:j+1])  # reverse order of segment from i to j
+                    # reverse order of segment from i to j
+                    tour[i+1:j+1] = reversed(tour[i+1:j+1])
                     cur_len += len_delta
                     found_improvement = True
     return tour
 
 # rotates start and end of tour to match the closest depot
+
+
 def rotate_depots(problem: Problem, tour: list[int]) -> tuple[list[int], int]:
     best_depot = problem.depots[0]
     for depot in problem.depots:
         for node in tour:
             ...
     return tour, random.sample(problem.depots, 1)[0]
+
 
 def eval_fitness(problem: Problem, solution: Solution) -> Fitness:
     if solution.fitness:

@@ -14,27 +14,33 @@ def rand_color():
 
 # currently implemented only models for MTSP problems
 # but any problem can be implemented in same manner
+
+
 @define(kw_only=True)
 class Problem:
     label: str
     description: str
     id: int = None
     color: str = field(factory=rand_color)
-    depots: list[int] # currently, we focus on single home depot problems
+    depots: list[int]  # currently, we focus on single home depot problems
     costs: list[list[int]] = None
     # present: list[list[bool]] = field(factory=)
     # costs: dict[tuple[int, int], float] = field(factory=dict)
-    display: dict[int, Any] = field(factory=dict) # optional structure for visualizing the problem
+    # optional structure for visualizing the problem
+    display: dict[int, Any] = field(factory=dict)
+
 
 @define(kw_only=True)
 class Fitness:
     max_tour_length: float
     total_length: float
 
+
 @define(kw_only=True)
 class Tour:
     depot: int
     tour: list[int] = field(factory=list)
+
 
 @define(kw_only=True)
 class Solution:
@@ -51,11 +57,13 @@ class Population:
     problem: Problem = None
     ...
 
+
 @define(kw_only=True)
 class DataPoint:
     index: int
     value: float
     time_sampled: datetime.time
+
 
 @define(kw_only=True)
 class EvolutionConfig:
@@ -66,15 +74,18 @@ class EvolutionConfig:
     mutation_operators: list[str]
     crossover_operators: list[str]
 
+
 @define(kw_only=True)
 class EvolutionState:
     generation: int
     iteration: int
     population: Population
 
+
 @define(kw_only=True)
 class Metrics:
     fitness: list[DataPoint]
+
 
 @unique
 class Status(Enum):
@@ -82,11 +93,13 @@ class Status(Enum):
     RUNNING = 'RUNNING'
     FINISHED = 'FINISHED'
 
+
 @define(kw_only=True)
 class Worker:
     host: str
     slots: int
     used_slots: int = 0
+
 
 @define(kw_only=True)
 class Run:

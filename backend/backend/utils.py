@@ -19,5 +19,6 @@ def prettify_sql(sql: str) -> str:
     sql = highlight(sql, lexer, formatter)
     return sql
 
+
 def prettify_attrs(obj: Any) -> str:
     return prettyprinter.cpprint(obj, end=" ")

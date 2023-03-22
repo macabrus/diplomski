@@ -77,7 +77,7 @@ const RunView: Component = () => {
         scales: {
           y: {
             beginAtZero: true,
-            max: 100
+            // max: 100
           },
           x: {
             type: "time",
@@ -87,7 +87,7 @@ const RunView: Component = () => {
             ticks: {
               maxTicksLimit: 10,
               callback(value) {
-                return new Date(value).toLocaleDateString('hr-HR', {month:'short', year:'numeric'}); 
+                return new Date(value).toLocaleTimeString('hr-HR', {second: 'numeric', minute: 'numeric', hour: 'numeric'}); 
               },
             },
           },

@@ -29,6 +29,7 @@ DB = 'app.db'
 
 register_structure_hook(Problem, lambda o, c: c(**dict(o)))
 
+
 async def add_problem(req: Request):
     payload = await req.json()
     file_content = (
@@ -43,12 +44,15 @@ async def add_problem(req: Request):
         unstructure(await repo.add_problem(req.app.state.db, problem))
     )
 
+
 async def remove_problem(req: Request):
     removed = await repo.remove_problem(req.app.state.db, req.path_params['id'])
     return JSONResponse(unstructure(removed))
 
+
 async def list_problems(req: Request):
     return JSONResponse(unstructure(await repo.list_problems(req.app.state.db)))
+
 
 async def list_populations(req: Request):
     format = req.query_params.get('format', None)
@@ -57,6 +61,7 @@ async def list_populations(req: Request):
         print(populations)
         return JSONResponse(unstructure(populations))
     return JSONResponse([])
+
 
 async def add_population(req: Request):
     payload = await req.json()
@@ -77,12 +82,15 @@ async def add_population(req: Request):
     await repo.add_population(req.app.state.db, population)
     return JSONResponse(unstructure(population))
 
+
 async def remove_population(req: Request):
     id = int(req.path_params['id'])
     return JSONResponse(await repo.remove_population(req.app.state.db, id))
 
+
 async def list_runs(req: Request):
     return JSONResponse([])
+
 
 async def add_run(req: Request):
     payload = await req.json()
@@ -90,24 +98,32 @@ async def add_run(req: Request):
     await repo.add_run(req.app.state.db, Run())
     return JSONResponse({})
 
+
 async def remove_run():
     raise NotImplemented
+
 
 async def start_run():
     raise NotImplemented
 
+
 async def pause_run():
     raise NotImplemented
 
+
 async def cancel_run():
     raise NotImplemented
+
 
 async def list_workers(req: Request):
     return JSONResponse(unstructure(req.app.state.workers))
 
 # invoked by runners only with evolution state as body
+
+
 async def save_evolution(req: Request):
     ...
+
 
 @asynccontextmanager
 async def lifespan(app: Starlette):
@@ -133,14 +149,17 @@ async def lifespan(app: Starlette):
 
 empty_list = []
 # endpoint for handling streaming of data points when algo is running
+
+
 class StreamEndpoint(WebSocketEndpoint):
     encoding = 'json'
+
     def __init__(self, scope, receive, send):
         super().__init__(scope, receive, send)
         self.subs = scope['app'].state.subs
-    
+
     async def on_connect(self, ws: WebSocket) -> None:
-        await ws.accept() # accept connection
+        await ws.accept()  # accept connection
         print(f"[{time()}] connected: {ws.client}")
 
     async def on_disconnect(self, ws: WebSocket, close_code: int) -> None:
@@ -154,7 +173,7 @@ class StreamEndpoint(WebSocketEndpoint):
                 print(f'removed runner: {runner}')
                 break
         print(f"[{time()}] disconnected: {ws.client} with code: {close_code}")
-    
+
     async def on_receive(self, ws: WebSocket, message: dict) -> None:
         print(f'received: {message}')
         match message['type']:
@@ -177,6 +196,8 @@ class StreamEndpoint(WebSocketEndpoint):
 
 # propagates incomming messages from producer processes to interested
 # clients on the frontend
+
+
 async def handle_ws(scope: Scope, receive: Receive, send: Send):
     subs = {}
     if not hasattr(scope.state, 'subs'):

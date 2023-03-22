@@ -29,7 +29,8 @@ public class FitnessMetricAccumulator implements Consumer<EvolutionState> {
         if (lastFitness != null /* and fitness is worse or equal to lastFitness */) {
             return;
         }
-        var dp = new DataPoint(Instant.now(), random.nextInt(0, 100));
+        index += random.nextInt(0, 100);
+        var dp = new DataPoint(Instant.now(), index);
         var data = metrics.data.computeIfAbsent(metricName, (key) -> new ArrayList<>());
         data.add(dp);
         listeners.forEach(l -> l.accept(dp));
