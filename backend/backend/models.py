@@ -99,4 +99,4 @@ class Run:
     problem: Problem = None
     state: EvolutionState
     config: EvolutionConfig = None
-    metrics: Metrics = Metrics
+    metrics: Metrics = field(factory=Metrics)

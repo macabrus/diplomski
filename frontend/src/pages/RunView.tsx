@@ -1,14 +1,20 @@
 import { useParams } from "@solidjs/router";
 import { Chart, registerables } from "chart.js";
 import "chartjs-adapter-date-fns";
-import { Component, onMount } from "solid-js";
+import { Component, createResource, onCleanup, onMount } from "solid-js";
 
 const RunView: Component = () => {
+  const id = +useParams().id;
+  /* Fetch detailed last snapshot of current run,
+     note that datapoints which were emitted before will not be */
+  createResource(async() => {
+    const res = await fetch(`/api/run/${id}`);
+    const data = await res.json();
+    return data;
+  });
+  console.log(id);
   let chartRef: any;
-  // let ws = new WebSocket('ws://socket.server.com');
-  // ws.onmessage = (message) => {
-  //   messageHandler(JSON.parse(message.data));
-  // }
+  let ws: WebSocket;
   const endDate = new Date();
   endDate.setTime(endDate.getTime() + 3600); // 1 hour
   const data = {
@@ -16,49 +22,40 @@ const RunView: Component = () => {
       {
         label: "Fitness",
         // cubicInterpolation: true,
-        tension: 0.1,
+        // tension: 0.1,
+        // fill: true,
         data: [
-          {
-            x: "2023-03-21 15:09:01",
-            y: 10,
-          },
-          {
-            x: "2023-03-21 15:09:30",
-            y: 20,
-          },
-          {
-            x: "2023-03-21 15:09:31",
-            y: 30,
-          },
+          // {
+          //   x: "2023-03-21 15:09:01",
+          //   y: 10,
+          // },
+          // {
+          //   x: "2023-03-21 15:09:30",
+          //   y: 20,
+          // },
+          // {
+          //   x: "2023-03-21 15:09:31",
+          //   y: 30,
+          // },
+          // {
+          //   x: "2023-03-21 15:10:31",
+          //   y: 30,
+          // },
+          // {
+          //   x: "2023-03-22 15:10:31",
+          //   y: 40,
+          // },
         ],
       },
-      // {
-      //   label: "Metric 1",
-      //   data: numbers({ count: 20, min: -100, max: 100 }),
-      //   borderColor: CHART_COLORS.red,
-      //   backgroundColor: transparentize(CHART_COLORS.red, 0.5),
-      //   cubicInterpolationMode: 'monotone',
-      //   tension: 1.0
-      // },
-      // {
-      //   label: "Metric 2",
-      //   data: numbers({ count: 20, min: -100, max: 100 }),
-      //   borderColor: CHART_COLORS.blue,
-      //   backgroundColor: transparentize(CHART_COLORS.blue, 0.5),
-      //   cubicInterpolationMode: 'monotone',
-      //   tension: 0.4
-      // },
-      // {
-      //   label: "Random 3",
-      //   data: dates({start: new Date(), end: endDate, step: 10000}),
-      //   borderColor: CHART_COLORS.blue,
-      //   backgroundColor: transparentize(CHART_COLORS.blue, 0.5),
-      //   cubicInterpolationMode: 'monotone',
-      //   tension: 0.4
-      // },
     ],
   };
   onMount(() => {
+    ws = new WebSocket('wss://127.0.0.1/api/stream');
+    /* Subscribe to topic of current run's ID */
+    ws.onopen = () => ws.send(JSON.stringify({
+      type: 'sub',
+      run_id: -1,
+    }));
     console.log(data);
     Chart.register(...registerables);
     const chart = new Chart(chartRef, {
@@ -79,25 +76,37 @@ const RunView: Component = () => {
         showLine: true,
         scales: {
           y: {
-            beginAtZero: true
+            beginAtZero: true,
+            max: 100
           },
           x: {
-            type: 'time',
+            type: "time",
             time: {
-              unit: 'second',
+              unit: "second",
             },
             ticks: {
               maxTicksLimit: 10,
-              // autoSkip: true,
-              // stepSize: 1,
-              // source: 'data'
+              callback(value) {
+                return new Date(value).toLocaleDateString('hr-HR', {month:'short', year:'numeric'}); 
+              },
             },
+          },
+        },
+        elements: {
+          point: {
+            radius: 0,
           },
         },
       },
     });
+    ws.onmessage = (message) => handleMessage(chart, JSON.parse(message.data));
     console.log(chart);
     // setInterval(() => handleData(chart, {}), 500);
+  });
+
+  onCleanup(() => {
+    ws.close();
+    console.log("Cleaning up (unsubscribing) websockets!");
   });
 
   const params = useParams();
@@ -240,15 +249,26 @@ function handleData(chart: Chart, message: any) {
   chart.update();
 }
 
-function messageHandler(message: any) {
-  switch (message.type) {
-    case "update": {
-      handleData(message);
-      break;
-    }
-    case "":
-      break;
-  }
+function handleMessage(chart: Chart, message: any) {
+  chart.data.datasets[0].data.push(message.value);
+  console.log(message);
+  chart.update();
 }
+
+// function messageHandler(message: any) {
+//   switch (message.type) {
+//     case "update": {
+//       for (let chart of charts) {
+//         let ds = chart.data.datasets.find(dataset => dataset.label === message.stat);
+//         ds.push({ y: message.value, message. });
+
+//       }
+//       handleData(message);
+//       break;
+//     }
+//     case "":
+//       break;
+//   }
+// }
 
 export default RunView;

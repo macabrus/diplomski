@@ -112,6 +112,7 @@ async def save_evolution(req: Request):
 @asynccontextmanager
 async def lifespan(app: Starlette):
     print('Initialize runner slots')
+    app.state.subs = {}
     app.state.workers: list[Worker] = []
     aiosqlite.register_adapter(dict, json.dumps)
     aiosqlite.register_adapter(list, json.dumps)
@@ -136,7 +137,7 @@ class StreamEndpoint(WebSocketEndpoint):
     encoding = 'json'
     def __init__(self, scope, receive, send):
         super().__init__(scope, receive, send)
-        self.subs = {}
+        self.subs = scope['app'].state.subs
     
     async def on_connect(self, ws: WebSocket) -> None:
         await ws.accept() # accept connection
@@ -160,14 +161,12 @@ class StreamEndpoint(WebSocketEndpoint):
             case 'pub':
                 pass  # just trust it, todo: add some kind of sec check
             case 'sub':
-                descriptor = {'ws': ws, 'offset': message['offset']}
                 if message['run_id'] not in self.subs:
                     self.subs[message['run_id']] = []
-                self.subs[message['run_id']].append(descriptor)
+                self.subs[message['run_id']].append({'ws': ws})
             case 'update':
                 for sub in self.subs.get(message['run_id'], empty_list):
-                    if sub['offset'] < message['index']:
-                        await sub['ws'].send_json(message)
+                    await sub['ws'].send_json(message)
             case 'runner':
                 workers = ws.app.state.workers
                 if message['action'] == 'register':
@@ -213,7 +212,8 @@ app = Starlette(
         Route('/run/{id}/pause', pause_run, methods=['PUT']),
         Route('/run/{id}/cancel', cancel_run, methods=['PUT']),
 
-        Route('/evolution/{id}', save_evolution, methods=['PUT']),
+        # checkpoint run
+        Route('/run/{id}', save_evolution, methods=['PUT']),
 
         # api for listing available workers
         Route('/worker', list_workers, methods=['GET']),
