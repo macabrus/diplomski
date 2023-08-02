@@ -1,10 +1,8 @@
-import asyncio
 import base64 as b64
 import json
 import sqlite3
 from contextlib import asynccontextmanager
 from datetime import time
-from uuid import uuid4
 
 import aiofiles
 import aiosqlite
@@ -17,7 +15,6 @@ from starlette.routing import Route, WebSocketRoute
 from starlette.types import Receive, Scope, Send
 from starlette.websockets import WebSocket
 
-from backend.dtos import ShortPopulation
 from backend.models import Problem, Run, Worker
 from backend.parsers import tsplib_parse
 from backend.populations import generate_population
@@ -56,11 +53,8 @@ async def list_problems(req: Request):
 
 async def list_populations(req: Request):
     format = req.query_params.get('format', None)
-    if format == 'short':
-        populations = await repo.list_populations_short(req.app.state.db)
-        print(populations)
-        return JSONResponse(unstructure(populations))
-    return JSONResponse([])
+    populations = await repo.list_populations(req.app.state.db, short=format == 'short')
+    return JSONResponse(unstructure(populations))
 
 
 async def add_population(req: Request):
@@ -244,3 +238,4 @@ app = Starlette(
     ],
     lifespan=lifespan
 )
+

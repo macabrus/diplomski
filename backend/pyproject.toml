@@ -21,6 +21,10 @@ tsplib95 = "^0.7.1"
 
 [tool.poetry.scripts]
 main = "backend:main"
+problem = "backend.parsers:main"
+
+[tool.poetry.group.dev.dependencies]
+yappi = "^1.4.0"
 
 [build-system]
 requires = ["poetry-core"]

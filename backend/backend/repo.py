@@ -133,10 +133,16 @@ async def get_population(db: Connection, pop_id: int) -> Population | None:
 # lists only label and id of population
 
 
-async def list_populations_short(db: Connection) -> list[ShortPopulation]:
-    sql = 'select id, label from population'
-    rows = await db.execute_fetchall(sql)
-    return list(map(lambda row: structure(row, ShortPopulation), rows))
+async def list_populations(db: Connection, short=False) -> list[ShortPopulation]:
+    if short:
+        sql = 'select id, label from population'
+        rows = await db.execute_fetchall(sql)
+        return [structure(row, ShortPopulation) for row in rows]
+    else:
+        sql = 'select id, label, individuals from population'
+        rows = await db.execute_fetchall(sql)
+        rows = [dict(row) for row in rows]
+        return [structure(row, Population) for row in rows]
 
 
 async def add_run(db: Connection,  run: Run):

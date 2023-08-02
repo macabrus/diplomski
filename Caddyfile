@@ -5,9 +5,9 @@
 }
 
 
-127.0.0.1 {
+localhost, 127.0.0.1 {
     handle_path /api* {
-        reverse_proxy localhost:8080 {
+        reverse_proxy localhost:8000 {
             header_up Host {host}
             header_up X-Real-IP {remote}
             header_up X-Forwarded-For {remote}

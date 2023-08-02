@@ -17,7 +17,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
- * Server setup
+ * Websocket connector setup
  */
 public class App {
     public static void main(String[] args) throws Exception {

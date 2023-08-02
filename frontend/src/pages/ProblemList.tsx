@@ -4,6 +4,7 @@ import { Component, createEffect, createResource, createSignal, For } from "soli
 interface Problem {
     id: number
     label: string
+    description: string
     dateAdded: string
     // date
 }
@@ -28,8 +29,10 @@ const Problems: Component = () => {
     return <>
         <Link class="btn btn-success" href="/problem/new">Create</Link>
         <For each={problems()}>{(problem, index) =>
-            <div>
-                {JSON.stringify(problem)}
+            <div class="rounded-lg m-5 p-3 shadow bg-white">
+                <h2>{problem?.label}</h2>
+                <p>{problem?.description}</p>
+                {/* {JSON.stringify(problem)} */}
                 <button class="btn btn-danger" onclick={() => remove(problem.id)}>Remove</button>
             </div>
         }</For>

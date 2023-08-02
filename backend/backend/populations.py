@@ -13,15 +13,14 @@ def generate_population(problem: Problem, salesmen: int, size: int) -> Populatio
         target=len(problem.costs)
     )
     for _ in range(size):
-        perm = list(range(len(problem.costs)))
+        perm = [city for city in range(len(problem.costs)) if city not in problem.depots]
         random.shuffle(perm)
         shares = cr.next()
         print(f'shares: {shares}')
         index = 0
         phenotype = []
         for share in shares:
-            salesman = Tour(depot=random.sample(problem.depots, 1)[
-                            0])  # currently only single starting depot :(
+            salesman = Tour(depot=random.sample(problem.depots, 1)[0])
             salesman.tour = perm[index:index+share]
             if False:  # two opt?
                 salesman.tour = two_opt(problem, salesman.tour)

@@ -34,5 +34,13 @@ def tsplib_parse(problem_str: str) -> Problem:
         depots=depots,
         display=display
     )
-    print(problem)
+    # print(problem)
     return problem
+
+
+def main():
+    import json, sys, pathlib
+    from cattrs import unstructure
+    problem = tsplib_parse((pathlib.Path('instances') / sys.argv[1]).read_text())
+    print(json.dumps(unstructure(problem), indent=4))
+

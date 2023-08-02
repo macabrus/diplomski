@@ -50,8 +50,11 @@ const Populations: Component = () => {
         </div>
       <For each={populations()}>
         {(pop, index) => (
-          <div>
-            {JSON.stringify(pop)}
+          <div class="rounded-lg m-5 p-3 shadow bg-white">
+            <h2>{pop?.name}</h2>
+            <p class="text-muted text-it">({pop?.problem})</p>
+            <p>Population size: {pop?.size}</p>
+            {/* {JSON.stringify(pop)} */}
             <button class="btn btn-danger" onclick={() => remove(pop.id)}>
               Remove
             </button>
