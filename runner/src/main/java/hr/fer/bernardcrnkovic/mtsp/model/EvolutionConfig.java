@@ -57,4 +57,5 @@ public class EvolutionConfig {
     public void setCrossoverOperators(List<String> crossoverOperators) {
         this.crossoverOperators = crossoverOperators;
     }
+
 }

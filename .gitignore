@@ -5,3 +5,5 @@ knjiga-0.1.2013-12-30.pdf
 **/.vscode/
 **/*.db-shm
 **/*.db-wal
+docs/
+test/

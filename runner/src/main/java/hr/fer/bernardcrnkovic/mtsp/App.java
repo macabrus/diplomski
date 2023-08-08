@@ -40,12 +40,12 @@ public class App {
         List<Thread> workers = new ArrayList<>(Runtime.getRuntime().availableProcessors());
 
         /* Prepare evolution */
-        NSGA2 nsga2 = new NSGA2(null, null);
+        NSGA2 nsga2 = new NSGA2(null);
         var fitnessAcc = new FitnessMetricAccumulator("fitness", new Metrics());
         fitnessAcc.addListener(queue::add);
         // attach listeners and notifiers
-        nsga2.addIterationListener(fitnessAcc);
-        nsga2.addStopNotifier(handler::shouldShutDown);
+        nsga2.addIterationConsumer(fitnessAcc);
+        nsga2.addStopSignalSupplier(handler::shouldShutDown);
 
         /* Infinite reconnect loop (Until shutdown packet is received from controller) */
         while (ws.getOpenSessions().size() == 0) {

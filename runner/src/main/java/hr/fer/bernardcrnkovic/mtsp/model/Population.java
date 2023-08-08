@@ -48,4 +48,8 @@ public class Population {
     public void setProblem(Problem problem) {
         this.problem = problem;
     }
+
+    public int getSize() {
+        return individuals.size();
+    }
 }

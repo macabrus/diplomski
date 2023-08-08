@@ -2,7 +2,10 @@ package hr.fer.bernardcrnkovic.mtsp.operator;
 
 import hr.fer.bernardcrnkovic.mtsp.model.Population;
 import hr.fer.bernardcrnkovic.mtsp.model.Problem;
+import hr.fer.bernardcrnkovic.mtsp.model.Salesman;
+import hr.fer.bernardcrnkovic.mtsp.model.Solution;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Compact {
@@ -39,5 +42,21 @@ public class Compact {
             }
 //            System.out.println(Arrays.toString(sol.tours));
         }
+    }
+
+    public static void computeSalesmenFromGene(Solution sol, Problem prob) {
+        int offset = 1;
+        var pheno = new ArrayList<Salesman>();
+        for (int i = 1; i < sol.tours.length; i++) {
+            if (prob.dummyToRealDepot.containsKey(sol.tours[i])) {
+                var sal = new Salesman();
+                sal.setDepot(prob.dummyToRealDepot.get(sol.tours[offset - 1]));
+                var salTour = new int[i - offset];
+                System.arraycopy(sol.tours, offset, salTour, 0, i - offset);
+                sal.setTour(salTour);
+                pheno.add(sal);
+            }
+        }
+        sol.setPhenotype(pheno);
     }
 }

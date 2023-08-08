@@ -5,12 +5,17 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import hr.fer.bernardcrnkovic.mtsp.algo.FastNonDomSort;
 import hr.fer.bernardcrnkovic.mtsp.model.Population;
 import hr.fer.bernardcrnkovic.mtsp.model.Problem;
+import hr.fer.bernardcrnkovic.mtsp.model.Solution;
 import hr.fer.bernardcrnkovic.mtsp.operator.Compact;
 import hr.fer.bernardcrnkovic.mtsp.operator.Crossover;
 import hr.fer.bernardcrnkovic.mtsp.operator.FitnessUtils;
+import hr.fer.bernardcrnkovic.mtsp.operator.Mutation;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Random;
+import java.util.Set;
 
 public class Parsing {
     public static void main(String[] args) throws IOException {
@@ -36,18 +41,49 @@ public class Parsing {
         var f2 = FitnessUtils.computeFitness(sol2, prob);
         System.out.printf("Parent 2 fitness : (%s, %s)%n", f2.getTotalLength(), f2.getMaxTourLength());
 
-        var child = Crossover.scx(sol1, sol2, prob);
-        System.out.println("Child   : " + child);
-        var f3 = FitnessUtils.computeFitness(child, prob);
+        var child1 = Crossover.scx(sol1, sol2, prob);
+        System.out.println("Child   : " + Arrays.toString(child1.tours));
+        var f3 = FitnessUtils.computeFitness(child1, prob);
         System.out.printf("Child fitness : (%s, %s)%n", f3.getTotalLength(), f3.getMaxTourLength());
 
+        var rand = new Random(6);
+        for (int i = 0; i < pop.getSize(); i++) {
+            for (int j = 0; j < pop.getSize(); j++) {
+                var p1 = pop.getIndividuals().get(i);
+                var p2 = pop.getIndividuals().get(j);
+                var children = Crossover.pmx(p1, p2, prob, rand);
+                children.forEach(child -> {
+                    System.out.println("Child   : " + Arrays.toString(child.tours));
+                    var f = FitnessUtils.computeFitness(child, prob);
+                    System.out.printf("Child fitness : (%s, %s)%n", f.getTotalLength(), f.getMaxTourLength());
+                    System.out.println(Set.of(Arrays.stream(child.tours).boxed().toArray()).size());
+                });
+            }
+        }
+
+        pop.getIndividuals().forEach(sol -> {
+            System.out.println();
+            System.out.println("original    : " + Arrays.toString(sol.tours));
+            var s = sol.copy();
+            s = Mutation.singleSwap(s, rand);
+            System.out.println("single swap : " + Arrays.toString(s.tours));
+            Set.of(s.tours);
+            s = sol.copy();
+            s = Mutation.segmentSwap(s, rand);
+            System.out.println("segment swap: " + Arrays.toString(s.tours));
+            Set.of(s.tours);
+            s = sol.copy();
+            s = Mutation.invertSwap(s, rand);
+            System.out.println("seg. reverse: " + Arrays.toString(s.tours));
+            Set.of(s.tours);
+        });
+
         pop.getIndividuals().forEach(sol -> FitnessUtils.computeFitness(sol, prob));
-        FastNonDomSort.fastNonDominatedSort(pop).forEach(front -> {
-            System.out.println("Front");
+        FastNonDomSort.fastNonDominatedSort(pop.getIndividuals(), pop.getIndividuals().size()).forEach(front -> {
+//            System.out.println("Front");
             System.out.println(front.stream().map(s -> {
-                var f = s.getFitness();
-                return "(%s, %s)".formatted(f.getTotalLength(), f.getMaxTourLength());
-            }).toList());
+                return "(%s, %s)".formatted(s.getTotalLength(), s.getMaxTourLength());
+            }).toList() + ", ");
         });
 
     }
