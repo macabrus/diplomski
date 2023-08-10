@@ -37,6 +37,20 @@ def tsplib_parse(problem_str: str) -> Problem:
     # print(problem)
     return problem
 
+def get_run():
+    import json, sys, pathlib, sqlite3
+    from cattrs import unstructure
+    sqlite3.register_converter('json', json.loads)
+    c = sqlite3.connect('app.db', detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
+    c.row_factory = sqlite3.Row
+    cur = c.execute('select * from run where id = :id', {'id': int(sys.argv[1])})
+    row = dict(cur.fetchone())
+    cur = c.execute('select * from population where id = :id', {'id': row['population_id']})
+    row['state']['population'] = dict(cur.fetchone())
+    cur = c.execute('select * from problem where id = :id', {'id': row['problem_id']})
+    row['problem'] = dict(cur.fetchone())
+    print(json.dumps(dict(row), indent=4))
+    ...
 
 def main():
     import json, sys, pathlib

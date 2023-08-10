@@ -18,10 +18,14 @@ sqlparse = "^0.4.3"
 pygments = "^2.14.0"
 prettyprinter = "^0.18.0"
 tsplib95 = "^0.7.1"
+darkdetect = "^0.8.0"
+sqlglot = "^17.10.2"
+rich = "^13.5.2"
 
 [tool.poetry.scripts]
 main = "backend:main"
 problem = "backend.parsers:main"
+run = "backend.parsers:get_run"
 
 [tool.poetry.group.dev.dependencies]
 yappi = "^1.4.0"

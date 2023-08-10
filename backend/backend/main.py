@@ -3,7 +3,7 @@ import json
 import sqlite3
 from contextlib import asynccontextmanager
 from datetime import time
-
+from rich.pretty import pprint
 import aiofiles
 import aiosqlite
 from cattrs import register_structure_hook, structure, unstructure
@@ -14,8 +14,9 @@ from starlette.responses import JSONResponse
 from starlette.routing import Route, WebSocketRoute
 from starlette.types import Receive, Scope, Send
 from starlette.websockets import WebSocket
+from backend.db import connection_context
 
-from backend.models import Problem, Run, Worker
+from backend.models import EvolutionConfig, EvolutionState, Metrics, Problem, Run, Worker
 from backend.parsers import tsplib_parse
 from backend.populations import generate_population
 from backend.utils import prettify_sql
@@ -83,13 +84,38 @@ async def remove_population(req: Request):
 
 
 async def list_runs(req: Request):
-    return JSONResponse([])
+    return JSONResponse(await repo.list_runs(req.app.state.db))
 
 
 async def add_run(req: Request):
     payload = await req.json()
     print(payload)
-    await repo.add_run(req.app.state.db, Run())
+    config = EvolutionConfig(
+        mutation_probability=payload['mutation_probability'],
+        sharing_distance=payload['sharing_distance'],
+        sharing_frequency=payload['sharing_frequency'],
+        ignore_rank_probability=payload['ignore_rank_probability'],
+        stop_after_generations=payload['max_iter'],
+        stop_after_steady_generations=payload['max_steady_generations'],
+        crossover_operators=['scx', 'aex', 'pmx'],
+        mutation_operators=['swap', 'swap-segment', 'revert-segment'],
+    )
+    pop = await repo.get_population(req.app.state.db, payload['population_id'])
+    prob = await repo.get_problem(req.app.state.db, pop.problem_id)
+    run = Run(
+        label=payload['label'],
+        problem_id=prob.id,
+        population_id=pop.id,
+        config=config,
+        problem=prob,
+        state=EvolutionState(
+            generation=0,
+            iteration=0,
+            population=pop
+        ),
+    )
+    pprint(run, indent_guides=False)
+    await repo.add_run(req.app.state.db, run)
     return JSONResponse({})
 
 
@@ -124,19 +150,20 @@ async def lifespan(app: Starlette):
     print('Initialize runner slots')
     app.state.subs = {}
     app.state.workers: list[Worker] = []
-    aiosqlite.register_adapter(dict, json.dumps)
-    aiosqlite.register_adapter(list, json.dumps)
-    aiosqlite.register_converter('json', json.loads)
-    print(f"Connecting to local db: {DB}")
-    async with aiosqlite.connect(DB, detect_types=sqlite3.PARSE_DECLTYPES) as db:
-        await db.set_trace_callback(lambda sql: print(prettify_sql(sql)))
-        await db.execute('pragma journal_mode = wal')
-        db.row_factory = aiosqlite.Row
+    # aiosqlite.register_adapter(dict, json.dumps)
+    # aiosqlite.register_adapter(list, json.dumps)
+    # aiosqlite.register_converter('json', json.loads)
+    # print(f"Connecting to local db: {DB}")
+    # async with aiosqlite.connect(DB, detect_types=sqlite3.PARSE_DECLTYPES) as db:
+    #     await db.set_trace_callback(lambda sql: print(prettify_sql(sql)))
+    #     await db.execute('pragma journal_mode = wal')
+    #     db.row_factory = aiosqlite.Row
+    async with connection_context(DB) as db:
         async with aiofiles.open('sql/schema.sql') as schema:
             await db.executescript(await schema.read())
         app.state.db = db
         yield
-        await db.commit()
+        # await db.commit()
         # async with aiofiles.open('sql/drop.sql') as schema:
         #    await db.executescript(await schema.read())
     print(f"Disconnecting from local db: {DB}")

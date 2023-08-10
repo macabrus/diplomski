@@ -1,5 +1,6 @@
 package hr.fer.bernardcrnkovic.mtsp;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import hr.fer.bernardcrnkovic.mtsp.algo.FastNonDomSort;

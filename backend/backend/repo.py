@@ -1,11 +1,12 @@
 
+import json
 from aiosqlite import Connection, Cursor
 from attrs import fields
 from cattrs import structure, unstructure
-
+from rich.pretty import pprint
 from backend.dtos import ShortPopulation
 
-from .models import EvolutionState, Population, Problem, Run
+from .models import EvolutionConfig, EvolutionState, Population, Problem, Run
 
 
 def csv_slots(model, skip=set()):
@@ -69,15 +70,15 @@ async def remove_problem(db: Connection, id: int) -> Problem | None:
         return structure(rows[0], Problem)
 
 
-async def get_problem(db: Connection, id: int) -> Problem:
-    sql = 'select * from problem where id = ?'
-    rows = await db.execute_fetchall(sql, (id,))
+async def get_problem(db: Cursor, id: int) -> Problem:
+    await db.execute('select * from problem where id = ?', (id,))
+    rows = await db.fetchall()
     return structure(rows[0], Problem)
 
 
-async def list_problems(db: Connection) -> list[Problem]:
-    sql = 'select * from problem'
-    rows = list(await db.execute_fetchall(sql))
+async def list_problems(db: Cursor) -> list[Problem]:
+    await db.execute('select * from problem')
+    rows = list(await db.fetchall())
     return list(map(lambda row: structure(row, Problem), rows))
 
 
@@ -130,13 +131,11 @@ async def get_population(db: Connection, pop_id: int) -> Population | None:
         return None
     return structure(rows[0], Population)
 
-# lists only label and id of population
 
-
-async def list_populations(db: Connection, short=False) -> list[ShortPopulation]:
+async def list_populations(db: Cursor, short=False) -> list[ShortPopulation]:
     if short:
-        sql = 'select id, label from population'
-        rows = await db.execute_fetchall(sql)
+        await db.execute('select id, label from population')
+        rows = await db.fetchall()
         return [structure(row, ShortPopulation) for row in rows]
     else:
         sql = 'select id, label, individuals from population'
@@ -145,23 +144,21 @@ async def list_populations(db: Connection, short=False) -> list[ShortPopulation]
         return [structure(row, Population) for row in rows]
 
 
-async def add_run(db: Connection,  run: Run):
-    sql = f'''
-    insert into run(
-    {csv_keys(Run, skip=('problem',))})
-    values (
-    {csv_slots(Run, skip=('problem',))})
-    returning id
-    '''
-    async with db.cursor() as cur:
-        population = await get_population()
-        problem = population.problem
-        await cur.execute(sql, unstructure(run))
-        rows = await cur.fetchall()
-        assert len(rows) == 1
-        return structure(rows[0] | {'problem': problem, 'population': population}, Run)
-
-# removes run
+async def add_run(db: Cursor,  run: Run):
+    await db.execute(f'''
+        insert into run(
+        {csv_keys(Run, skip=('id', 'problem', 'population'))})
+        values (
+        {csv_slots(Run, skip=('id', 'problem', 'population'))})
+        returning id
+    ''', unstructure(run))
+    row = dict((await db.fetchall())[0])
+    run.id = row['id']
+    return run
+    # row |= {'problem': await get_problem(db, row['problem_id'])}
+    # row |= {'population': await get_population(db, row['population_id'])}
+    # pprint(row)
+    # return structure(row, Run)
 
 
 async def remove_run(db: Connection, id: int):
@@ -171,13 +168,19 @@ async def remove_run(db: Connection, id: int):
 # gets run DETAILS
 
 
-async def get_run(db: Connection):
+async def get_run(db: Cursor):
     sql = '''
     select * from run
     left join population as pop
     left join problem as prob
     left join
     '''
+    print('here')
+
+async def list_runs(db: Cursor):
+    await db.execute('select * from run')
+    rows = await db.fetchall()
+    print(json.dumps([dict(row) for row in rows]))
 
 # updates evolution state of a run with data
 # received from runner subprocess

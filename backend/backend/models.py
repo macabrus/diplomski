@@ -52,9 +52,8 @@ class Solution:
 class Population:
     label: str
     individuals: list[Solution] = field(factory=list)
-    id: int = None
-    problem_id: int = None
-    problem: Problem | None = None
+    id: int
+    problem_id: int
     ...
 
 
@@ -69,6 +68,8 @@ class DataPoint:
 class EvolutionConfig:
     mutation_probability: float
     sharing_distance: float
+    sharing_frequency: float
+    ignore_rank_probability: float
     stop_after_generations: int | None
     stop_after_steady_generations: int
     mutation_operators: list[str]
@@ -79,12 +80,12 @@ class EvolutionConfig:
 class EvolutionState:
     generation: int
     iteration: int
-    population: Population
+    population: Population | None
 
 
 @define(kw_only=True)
 class Metrics:
-    fitness: list[DataPoint]
+    fitness: list[DataPoint] = field(factory=list)
 
 
 @unique
@@ -105,11 +106,12 @@ class Worker:
 class Run:
     id: int = None
     problem_id: int = None
-    config_id: int = None
     population_id: int = None
 
-    status: Status = Status.PENDING
-    problem: Problem = None
+    label: str
+    problem: Problem
     state: EvolutionState
-    config: EvolutionConfig = None
+    config: EvolutionConfig
+
+    status: Status = Status.PENDING
     metrics: Metrics = field(factory=Metrics)

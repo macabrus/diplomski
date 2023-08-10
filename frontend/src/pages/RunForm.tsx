@@ -12,6 +12,8 @@ const [label, setLabel] = createSignal("");
 const [popId, setPopId] = createSignal(-1);
 const [mutProb, setMutProb] = createSignal(0.05);
 const [sharingFreq, setSharingFreq] = createSignal(0.05);
+const [sharingDist, setSharingDist] = createSignal(300);
+const [ignoreRankProbability, setIgnoreRankProbability] = createSignal(0.05);
 const [maxIter, setMaxIter] = createSignal(1000);
 const [maxSteadyGen, setMaxSteadyGen] = createSignal(1000);
 
@@ -43,7 +45,9 @@ const RunForm: Component = () => {
       label: label(),
       population_id: popId(),
       mutation_probability: mutProb(),
+      sharing_distance: sharingDist(),
       sharing_frequency: sharingFreq(),
+      ignore_rank_probability: ignoreRankProbability(),
       max_iter: maxIter(),
       max_steady_generations: maxSteadyGen()
     };
@@ -110,6 +114,25 @@ const RunForm: Component = () => {
         </div>
       </div>
 
+      {/* SHARING DISTANCE */}
+      <div class="mb-3">
+        <label for="customRange1" class="form-label">
+          Sharing distance:
+        </label>
+        <input
+          type="range"
+          use:numModel={[sharingDist, setSharingDist]}
+          class="form-range"
+          id="size"
+          aria-describedby="size-help"
+          min="0"
+          max="100000"
+          step="10"></input>
+        <div id="two-opt-help" class="form-text">
+          {sharingDist()}
+        </div>
+      </div>
+
       {/* SHARING FREQUENCY */}
       <div class="mb-3">
         <label for="customRange1" class="form-label">
@@ -126,6 +149,25 @@ const RunForm: Component = () => {
           step="0.001"></input>
         <div id="two-opt-help" class="form-text">
           {sharingFreq()}
+        </div>
+      </div>
+
+      {/* RANK IGNORING PROBABILITY */}
+      <div class="mb-3">
+        <label for="customRange1" class="form-label">
+          Probability for ignoring non-dominated sorting rank in tournament selection:
+        </label>
+        <input
+          type="range"
+          use:numModel={[ignoreRankProbability, setIgnoreRankProbability]}
+          class="form-range"
+          id="size"
+          aria-describedby="size-help"
+          min="0"
+          max="1"
+          step="0.001"></input>
+        <div id="two-opt-help" class="form-text">
+          {ignoreRankProbability()}
         </div>
       </div>
 

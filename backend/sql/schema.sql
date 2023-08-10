@@ -17,8 +17,11 @@ create table if not exists population(
 
 create table if not exists run(
     id integer primary key AUTOINCREMENT,
+    label text,
     problem_id integer,
-    evolution_state json,
-    status boolean,
-    data_points json
+    population_id integer,
+    "state" json,
+    "config" json,
+    "status" boolean,
+    metrics json
 );
