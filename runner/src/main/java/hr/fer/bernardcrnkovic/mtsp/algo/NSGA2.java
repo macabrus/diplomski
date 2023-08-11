@@ -1,10 +1,9 @@
 package hr.fer.bernardcrnkovic.mtsp.algo;
 
-import hr.fer.bernardcrnkovic.mtsp.model.EvolutionConfig;
-import hr.fer.bernardcrnkovic.mtsp.model.EvolutionState;
-import hr.fer.bernardcrnkovic.mtsp.model.Run;
-import hr.fer.bernardcrnkovic.mtsp.model.Solution;
+import hr.fer.bernardcrnkovic.mtsp.model.*;
 import hr.fer.bernardcrnkovic.mtsp.operator.Crossover;
+import hr.fer.bernardcrnkovic.mtsp.operator.EncDec;
+import hr.fer.bernardcrnkovic.mtsp.operator.FitnessUtils;
 import hr.fer.bernardcrnkovic.mtsp.operator.Mutation;
 
 import java.util.ArrayList;
@@ -22,38 +21,65 @@ public class NSGA2 {
     private final List<Consumer<EvolutionState>> iterConsumers = new ArrayList<>();
     private final List<Consumer<EvolutionState>> genConsumers = new ArrayList<>();
     private final List<Supplier<Boolean>> stopSignalSuppliers = new ArrayList<>();
-    private final Random random = new Random();
-    private final List<BiFunction<Solution, Solution, List<Solution>>> recombinators;
-    private final List<Function<Solution, Solution>> mutators;
+    private final Random random = new Random(4);
+    private final BiFunction<Solution, Solution, List<Solution>> recombinator;
+    private final Function<Solution, Solution> mutator;
+    private final Problem problem;
 
     public NSGA2(Run run) {
-        // this.crossoverOperators = new
         this.state = run.state;
         this.config = run.config;
-        // TODO: prepare crossover and mutation operators in tight arrays here
-        // so we don't waste time with hashtable lookups
-        recombinators = new ArrayList<>() {{
-            add((s1, s2) -> List.of(Crossover.scx(s1, s2, run.problem)));
-            add((s1, s2) -> Crossover.pmx(s1, s2, run.problem, random));
+        this.problem = run.problem;
+
+        var cxOpNames = run.config.getCrossoverOperators();
+        var cxOps = new ArrayList<BiFunction<Solution, Solution, List<Solution>>>() {{
+            if (cxOpNames.contains("scx")) {
+                add((s1, s2) -> List.of(Crossover.scx(s1, s2, run.problem)));
+            }
+            if (cxOpNames.contains("pmx")) {
+                add((s1, s2) -> Crossover.pmx(s1, s2, run.problem, random));
+            }
+//            if (cxOpNames.contains("aex")) {
+//                add((s1, s2) -> List.of(Crossover.aex(s1, s2, run.problem)));
+//            }
         }};
-        mutators = new ArrayList<>() {{
-            add(s -> Mutation.singleSwap(s, random));
-            add(s -> Mutation.segmentSwap(s, random));
-            add(s -> Mutation.invertSwap(s, random));
+        var mutOps = new ArrayList<Function<Solution, Solution>>() {{
+            var mutOps = run.config.getMutationOperators();
+            if (mutOps.contains("swap")) {
+                add(s -> Mutation.singleSwap(s, random));
+            }
+            if (mutOps.contains("swap-segment")) {
+                add(s -> Mutation.segmentSwap(s, random));
+            }
+            if (mutOps.contains("invert-segment")) {
+                add(s -> Mutation.invertSwap(s, random));
+            }
         }};
+
+        /* Set up meta-recombinator and meta-mutator */
+        recombinator = (s1, s2) -> cxOps.get(random.nextInt(cxOps.size())).apply(s1, s2);
+        mutator = (s1) -> mutOps.get(random.nextInt(mutOps.size())).apply(s1);
     }
 
     public void run() {
         while (stopSignalSuppliers.stream().noneMatch(Supplier::get)) {
-            System.out.println("Iter");
+            state.iteration += 1;
+            System.out.println("Iter " + state.iteration);
+            // compute fitnesses where necessary
+            state.population.getIndividuals().forEach(s -> {
+                if (!s.isEvaluated()) {
+                    FitnessUtils.computeFitness(s, problem);
+                }
+            });
             /* 1. generate N children from population of N parents */
             List<Solution> children = new ArrayList<>();
             while (children.size() < state.population.getSize()) {
                 var p1 = FastNonDomSort.select(state.population, 3, random);
                 var p2 = FastNonDomSort.select(state.population, 3, random);
-                var cs = recombinators.get(random.nextInt(recombinators.size())).apply(p1, p2);
+                var cs = recombinator.apply(p1, p2);
+                cs.forEach(s -> FitnessUtils.computeFitness(s, problem));
                 if (random.nextDouble() < config.getMutationProbability()) {
-                    cs.forEach(c -> mutators.get(random.nextInt(mutators.size())).apply(c));
+                    cs.forEach(mutator::apply);
                 }
                 children.addAll(cs);
             }

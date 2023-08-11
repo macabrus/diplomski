@@ -1,20 +1,17 @@
 package hr.fer.bernardcrnkovic.mtsp;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import hr.fer.bernardcrnkovic.mtsp.algo.FastNonDomSort;
 import hr.fer.bernardcrnkovic.mtsp.model.Population;
 import hr.fer.bernardcrnkovic.mtsp.model.Problem;
-import hr.fer.bernardcrnkovic.mtsp.model.Solution;
-import hr.fer.bernardcrnkovic.mtsp.operator.Compact;
+import hr.fer.bernardcrnkovic.mtsp.operator.EncDec;
 import hr.fer.bernardcrnkovic.mtsp.operator.Crossover;
 import hr.fer.bernardcrnkovic.mtsp.operator.FitnessUtils;
 import hr.fer.bernardcrnkovic.mtsp.operator.Mutation;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
 
@@ -29,7 +26,7 @@ public class Parsing {
         // deser population
         var pop = mapper.readValue(Parsing.class.getResourceAsStream("/bayg29-population.json"), Population.class);
         // set prob
-        Compact.cacheSolutionSequence(prob, pop);
+        EncDec.encodeSolutions(pop, prob);
         System.out.println("Dummy Depots: " + prob.dummyToRealDepot.keySet().stream().toList());
         // test crossover
         var sol1 = pop.getIndividuals().get(0);

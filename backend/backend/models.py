@@ -54,6 +54,7 @@ class Population:
     individuals: list[Solution] = field(factory=list)
     id: int
     problem_id: int
+    num_salesmen: int
     ...
 
 

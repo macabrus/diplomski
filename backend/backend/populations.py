@@ -4,23 +4,25 @@ import sys
 
 from backend.constrained_random import ConstrainedRandom
 from backend.models import Fitness, Population, Problem, Solution, Tour
-
+from rich.pretty import pprint
 
 def generate_population(problem: Problem, salesmen: int, size: int) -> Population:
-    pop = Population(label=None)
+    pop = Population(id=None, problem_id=problem.id, num_salesmen=salesmen, label=None)
     cr = ConstrainedRandom(
-        ranges=[(1, len(problem.costs)) for _ in range(salesmen)],
+        ranges=[(1, len(problem.costs) - 1) for _ in range(salesmen)],
         target=len(problem.costs)
     )
+    print('DEPOTS:', problem.depots)
     for _ in range(size):
         perm = [city for city in range(len(problem.costs)) if city not in problem.depots]
+        pprint(len(perm))
         random.shuffle(perm)
         shares = cr.next()
-        print(f'shares: {shares}')
         index = 0
         phenotype = []
+        pprint(shares)
         for share in shares:
-            salesman = Tour(depot=random.sample(problem.depots, 1)[0])
+            salesman = Tour(depot=random.choice(problem.depots))
             salesman.tour = perm[index:index+share]
             if False:  # two opt?
                 salesman.tour = two_opt(problem, salesman.tour)
@@ -30,10 +32,9 @@ def generate_population(problem: Problem, salesmen: int, size: int) -> Populatio
             phenotype.append(salesman)
             index += share
         solution = Solution(phenotype=phenotype)
-        print(f'solution: {solution}')
+        # print(f'solution: {solution}')
         eval_fitness(problem, solution)
-        print(f'solution with fitness: {solution}')
-        assert index == len(problem.costs)
+        # print(f'solution with fitness: {solution}')
         pop.individuals.append(solution)
     return pop
 

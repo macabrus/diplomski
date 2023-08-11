@@ -127,6 +127,7 @@ public class FastNonDomSort {
     // this uses crowding comparison operator
     public static Solution select(Population population, int k, Random rand) {
         var pop = population.getIndividuals();
-        return rand.ints(k).mapToObj(pop::get).max(crowdingDistanceComparator).get();
+        return rand.ints(k, 0, pop.size())
+                .mapToObj(pop::get).max(crowdingDistanceComparator).get();
     }
 }

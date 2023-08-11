@@ -12,7 +12,8 @@ create table if not exists population(
     id integer primary key autoincrement,
     label text,
     problem_id integer,
-    individuals json
+    individuals json,
+    "_data" json
 );
 
 create table if not exists run(

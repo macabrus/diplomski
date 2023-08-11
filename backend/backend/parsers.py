@@ -1,6 +1,8 @@
 
 import itertools
 import re
+
+from backend.populations import generate_population
 from .models import Problem
 import tsplib95
 
@@ -51,6 +53,9 @@ def get_run():
     row['problem'] = dict(cur.fetchone())
     print(json.dumps(dict(row), indent=4))
     ...
+
+# def gen_pop():
+#     generate_population()
 
 def main():
     import json, sys, pathlib

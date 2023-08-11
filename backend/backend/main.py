@@ -71,8 +71,8 @@ async def add_population(req: Request):
     problem = await repo.get_problem(req.app.state.db, problem_id)
     population = generate_population(problem, num_salesmen, size)
     population.label = label
-    population.problem_id = problem_id
-    population.problem = problem
+    # population.problem_id = problem_id
+    # population.problem = problem
     print(population)
     await repo.add_population(req.app.state.db, population)
     return JSONResponse(unstructure(population))
@@ -150,22 +150,11 @@ async def lifespan(app: Starlette):
     print('Initialize runner slots')
     app.state.subs = {}
     app.state.workers: list[Worker] = []
-    # aiosqlite.register_adapter(dict, json.dumps)
-    # aiosqlite.register_adapter(list, json.dumps)
-    # aiosqlite.register_converter('json', json.loads)
-    # print(f"Connecting to local db: {DB}")
-    # async with aiosqlite.connect(DB, detect_types=sqlite3.PARSE_DECLTYPES) as db:
-    #     await db.set_trace_callback(lambda sql: print(prettify_sql(sql)))
-    #     await db.execute('pragma journal_mode = wal')
-    #     db.row_factory = aiosqlite.Row
     async with connection_context(DB) as db:
         async with aiofiles.open('sql/schema.sql') as schema:
             await db.executescript(await schema.read())
         app.state.db = db
         yield
-        # await db.commit()
-        # async with aiofiles.open('sql/drop.sql') as schema:
-        #    await db.executescript(await schema.read())
     print(f"Disconnecting from local db: {DB}")
 
 empty_list = []

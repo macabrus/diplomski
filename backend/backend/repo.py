@@ -96,20 +96,23 @@ async def has_active_depenendent_runs(db: Connection, problem_id: int):
     return bool(await db.fetchall())
 
 
-async def add_population(db: Connection, population: Population) -> Population:
+async def add_population(db: Cursor, population: Population) -> Population:
     sql = f'''
     insert into population(
-    {csv_keys(Population, skip=('id', 'problem'))}
+    {csv_keys(Population, skip=('id', 'problem', 'num_salesmen'))}, "_data"
     ) values(
-    {csv_slots(Population, skip=('id', 'problem'))})
+    {csv_slots(Population, skip=('id', 'problem', 'num_salesmen'))}, :_data
+    )
     returning id
     '''
-    async with db.cursor() as cur:
-        if await has_population_label(cur, population.label):
-            raise
-        await cur.execute(sql, unstructure(population))
-        population.id = (await cur.fetchall())[0]['id']
-        return population
+    if await has_population_label(db, population.label):
+        raise
+    row = unstructure(population)
+    row['_data'] = {'num_salesmen': row.pop('num_salesmen')}
+    pprint(row)
+    await db.execute(sql, row)
+    population.id = (await db.fetchall())[0]['id']
+    return population
 
 
 async def has_population_label(db: Cursor, label: str):
@@ -127,9 +130,11 @@ async def get_population(db: Connection, pop_id: int) -> Population | None:
     sql = 'select * from population where id = ?'
     await db.execute(sql, (pop_id,))
     rows = await db.fetchall()
+    row = dict(rows[0])
+    row |= row.pop('_data')
     if not rows:
         return None
-    return structure(rows[0], Population)
+    return structure(row, Population)
 
 
 async def list_populations(db: Cursor, short=False) -> list[ShortPopulation]:
