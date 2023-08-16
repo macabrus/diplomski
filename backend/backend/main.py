@@ -1,12 +1,10 @@
 import base64 as b64
-import json
-import sqlite3
 from contextlib import asynccontextmanager
 from datetime import time
-from rich.pretty import pprint
+
 import aiofiles
-import aiosqlite
 from cattrs import register_structure_hook, structure, unstructure
+from rich.pretty import pprint
 from starlette.applications import Starlette
 from starlette.endpoints import WebSocketEndpoint
 from starlette.requests import Request
@@ -14,14 +12,12 @@ from starlette.responses import JSONResponse
 from starlette.routing import Route, WebSocketRoute
 from starlette.types import Receive, Scope, Send
 from starlette.websockets import WebSocket
-from backend.db import connection_context
 
-from backend.models import EvolutionConfig, EvolutionState, Metrics, Problem, Run, Worker
+from backend.db import connection_context
+from backend.models import EvolutionConfig, EvolutionState, Problem, Run, Worker
 from backend.parsers import tsplib_parse
 from backend.populations import generate_population
-from backend.utils import prettify_sql
-
-from . import repo
+from backend import repo
 
 DB = 'app.db'
 

@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 
 public class Run {
+    public int id;
+    public String label;
     public Problem problem; //
     public EvolutionState state; // mutable state
     public EvolutionConfig config; // static config

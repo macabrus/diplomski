@@ -4,6 +4,7 @@
     "problem_id": 3,
     "population_id": 1,
     "state": {
+        "seed": 2,
         "generation": 0,
         "iteration": 0,
         "population": {
@@ -5105,12 +5106,12 @@
         }
     },
     "config": {
-        "mutation_probability": 0.05,
+        "mutation_probability": 0.4,
         "sharing_distance": 300,
         "sharing_frequency": 0.05,
         "ignore_rank_probability": 0.05,
-        "stop_after_generations": 1000,
-        "stop_after_steady_generations": 1000,
+        "stop_after_generations": 100000,
+        "stop_after_steady_generations": 10000,
         "mutation_operators": [
             "swap",
             "swap-segment",

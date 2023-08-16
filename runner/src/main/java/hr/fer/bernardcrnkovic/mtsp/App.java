@@ -62,7 +62,13 @@ public class App {
             // queue contains messages produced from evolution thread
             // and is drained into websocket
             // var state = mapper.readValue(res.getContentAsString(), EvolutionState.class);
-            workers.add(new Thread(nsga2::run));
+            workers.add(new Thread(() -> {
+                try {
+                    nsga2.run();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }));
             workers.get(workers.size() - 1).start();
 
             // wait for websocket closure

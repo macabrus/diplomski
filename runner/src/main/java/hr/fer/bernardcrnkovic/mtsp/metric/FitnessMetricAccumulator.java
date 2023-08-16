@@ -30,7 +30,7 @@ public class FitnessMetricAccumulator implements Consumer<EvolutionState> {
             return;
         }
         index += random.nextInt(0, 100);
-        var dp = new DataPoint(Instant.now(), index);
+        var dp = new DataPoint(Instant.now(), Map.of("dummy", index));
         var data = metrics.data.computeIfAbsent(metricName, (key) -> new ArrayList<>());
         data.add(dp);
         listeners.forEach(l -> l.accept(dp));

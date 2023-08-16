@@ -6,4 +6,5 @@ knjiga-0.1.2013-12-30.pdf
 **/*.db-shm
 **/*.db-wal
 docs/
-test/
+**/output/
+**/__pycache__/

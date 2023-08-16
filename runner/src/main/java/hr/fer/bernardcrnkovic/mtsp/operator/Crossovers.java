@@ -4,10 +4,9 @@ import hr.fer.bernardcrnkovic.mtsp.model.Problem;
 import hr.fer.bernardcrnkovic.mtsp.model.Solution;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 
-public class Crossover {
+public class Crossovers {
 
     // sequential cycle crossover
     public static Solution scx(Solution sol2, Solution sol1, Problem prob) {
@@ -87,7 +86,7 @@ public class Crossover {
 //        System.out.println("HASHSET SIZE " + Arrays.stream(child.tours).boxed().collect(Collectors.toSet()).size());
 
         // cache phenotype and store it for child
-        EncDec.decodeSolution(child, prob);
+        Encoder.decodeSolution(child, prob);
         return child;
     }
 
@@ -148,8 +147,8 @@ public class Crossover {
 
 //        System.out.println("A " + Arrays.toString(c1.tours));
 //        System.out.println("A " + Arrays.toString(c2.tours));
-        EncDec.decodeSolution(c1, prob);
-        EncDec.decodeSolution(c2, prob);
+        Encoder.decodeSolution(c1, prob);
+        Encoder.decodeSolution(c2, prob);
 //        System.out.println("C1: " + Arrays.toString(c1.tours));
 //        System.out.println("C2: " + Arrays.toString(c2.tours));
 //

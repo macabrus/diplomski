@@ -19,4 +19,9 @@ public class Fitness {
     public void setTotalLength(double totalLength) {
         this.totalLength = totalLength;
     }
+
+    @Override
+    public String toString() {
+        return "(neg_max_tour = %10s, neg_total = %10s)".formatted(maxTourLength, totalLength);
+    }
 }

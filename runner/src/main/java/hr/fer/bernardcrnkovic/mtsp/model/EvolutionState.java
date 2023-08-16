@@ -1,8 +1,11 @@
 package hr.fer.bernardcrnkovic.mtsp.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class EvolutionState {
-//    public long seed;
+    @JsonProperty("seed")
+    public long initialSeed;
     public int generation;
-    public int iteration;
     public Population population;
+    public int steadyGenerations;
 }

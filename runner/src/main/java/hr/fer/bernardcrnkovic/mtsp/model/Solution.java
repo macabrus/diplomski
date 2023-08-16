@@ -1,5 +1,7 @@
 package hr.fer.bernardcrnkovic.mtsp.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.util.List;
 
 public class Solution {
@@ -10,8 +12,10 @@ public class Solution {
 
     private Fitness fitness;
     /* non-serialized properties */
-    int front;
+    int rank;
     double crowdingDistance;
+    private boolean evaluated = false;
+    private boolean crowdingDistanceEvaluated = false;
 
     public List<Salesman> getPhenotype() {
         return phenotype;
@@ -21,25 +25,30 @@ public class Solution {
         this.phenotype = phenotype;
     }
 
+    @JsonIgnore
     public int[] getTours() {
         return tours;
     }
 
+    @JsonIgnore
     public void setTours(int[] tours) {
         this.tours = tours;
     }
 
     // total tours sizes added up
+    @JsonIgnore
     public double getTotalLength() {
         return fitness.getTotalLength();
     }
 
     // longest tour size
+    @JsonIgnore
     public double getMaxTourLength() {
         return fitness.getMaxTourLength();
     }
 
     // computed distance to closest neighbors normalized
+    @JsonIgnore
     public double getCrowdingDistance() {
         return crowdingDistance;
     }
@@ -48,13 +57,25 @@ public class Solution {
         this.crowdingDistance = crowdingDistance;
     }
 
-    // which front it belongs to (lower is better)
-    public int getRank() {
-        return front;
+    public void setRank(int rank) {
+        this.rank = rank;
     }
 
-    private boolean evaluated = false;
+    // which front it belongs to (lower is better)
+    public int getRank() {
+        return rank;
+    }
 
+    public void setCrowdingDistanceEvaluated(boolean crowdingDistanceEvaluated) {
+        this.crowdingDistanceEvaluated = crowdingDistanceEvaluated;
+    }
+
+    @JsonIgnore
+    public boolean isCrowdingDistanceEvaluated() {
+        return crowdingDistanceEvaluated;
+    }
+
+    @JsonIgnore
     public boolean isEvaluated() {
         return evaluated;
     }
@@ -88,7 +109,7 @@ public class Solution {
         sol.fitness.totalLength = this.getTotalLength();
 
         sol.crowdingDistance = this.crowdingDistance;
-        sol.front = this.front;
+        sol.rank = this.rank;
         System.arraycopy(tours, 0, sol.tours, 0, tours.length);
         return sol;
     }

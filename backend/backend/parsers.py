@@ -1,10 +1,9 @@
-
 import itertools
 import re
 
-from backend.populations import generate_population
-from .models import Problem
 import tsplib95
+
+from .models import Problem
 
 single_line_key_ex = re.compile(r"^(?P<key>[A-Z][A-Z0-9_]*):\s+(?P<val>.*)$")
 multi_line_key_ex = re.compile(r"^(?P<key>[A-Z][A-Z0-9_]*)$")
@@ -39,9 +38,9 @@ def tsplib_parse(problem_str: str) -> Problem:
     # print(problem)
     return problem
 
+
 def get_run():
-    import json, sys, pathlib, sqlite3
-    from cattrs import unstructure
+    import json, sys, sqlite3
     sqlite3.register_converter('json', json.loads)
     c = sqlite3.connect('app.db', detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
     c.row_factory = sqlite3.Row
@@ -54,6 +53,7 @@ def get_run():
     print(json.dumps(dict(row), indent=4))
     ...
 
+
 # def gen_pop():
 #     generate_population()
 
@@ -62,4 +62,3 @@ def main():
     from cattrs import unstructure
     problem = tsplib_parse((pathlib.Path('instances') / sys.argv[1]).read_text())
     print(json.dumps(unstructure(problem), indent=4))
-

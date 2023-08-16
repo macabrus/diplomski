@@ -2,13 +2,12 @@ package hr.fer.bernardcrnkovic.mtsp;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
-import hr.fer.bernardcrnkovic.mtsp.algo.FastNonDomSort;
 import hr.fer.bernardcrnkovic.mtsp.model.Population;
 import hr.fer.bernardcrnkovic.mtsp.model.Problem;
-import hr.fer.bernardcrnkovic.mtsp.operator.EncDec;
-import hr.fer.bernardcrnkovic.mtsp.operator.Crossover;
-import hr.fer.bernardcrnkovic.mtsp.operator.FitnessUtils;
-import hr.fer.bernardcrnkovic.mtsp.operator.Mutation;
+import hr.fer.bernardcrnkovic.mtsp.operator.Encoder;
+import hr.fer.bernardcrnkovic.mtsp.operator.Crossovers;
+import hr.fer.bernardcrnkovic.mtsp.operator.Evaluator;
+import hr.fer.bernardcrnkovic.mtsp.operator.Mutator;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -26,22 +25,22 @@ public class Parsing {
         // deser population
         var pop = mapper.readValue(Parsing.class.getResourceAsStream("/bayg29-population.json"), Population.class);
         // set prob
-        EncDec.encodeSolutions(pop, prob);
+        Encoder.encodeSolutions(pop, prob);
         System.out.println("Dummy Depots: " + prob.dummyToRealDepot.keySet().stream().toList());
         // test crossover
         var sol1 = pop.getIndividuals().get(0);
         System.out.println("Parent 1: " + Arrays.toString(sol1.tours));
-        var f1 = FitnessUtils.computeFitness(sol1, prob);
+        var f1 = Evaluator.evaluate(sol1, prob);
         System.out.printf("Parent 1 fitness : (%s, %s)%n", f1.getTotalLength(), f1.getMaxTourLength());
 
         var sol2 = pop.getIndividuals().get(1);
         System.out.println("Parent 2: " + Arrays.toString(sol2.tours));
-        var f2 = FitnessUtils.computeFitness(sol2, prob);
+        var f2 = Evaluator.evaluate(sol2, prob);
         System.out.printf("Parent 2 fitness : (%s, %s)%n", f2.getTotalLength(), f2.getMaxTourLength());
 
-        var child1 = Crossover.scx(sol1, sol2, prob);
+        var child1 = Crossovers.scx(sol1, sol2, prob);
         System.out.println("Child   : " + Arrays.toString(child1.tours));
-        var f3 = FitnessUtils.computeFitness(child1, prob);
+        var f3 = Evaluator.evaluate(child1, prob);
         System.out.printf("Child fitness : (%s, %s)%n", f3.getTotalLength(), f3.getMaxTourLength());
 
         var rand = new Random(6);
@@ -49,10 +48,10 @@ public class Parsing {
             for (int j = 0; j < pop.getSize(); j++) {
                 var p1 = pop.getIndividuals().get(i);
                 var p2 = pop.getIndividuals().get(j);
-                var children = Crossover.pmx(p1, p2, prob, rand);
+                var children = Crossovers.pmx(p1, p2, prob, rand);
                 children.forEach(child -> {
                     System.out.println("Child   : " + Arrays.toString(child.tours));
-                    var f = FitnessUtils.computeFitness(child, prob);
+                    var f = Evaluator.evaluate(child, prob);
                     System.out.printf("Child fitness : (%s, %s)%n", f.getTotalLength(), f.getMaxTourLength());
                     System.out.println(Set.of(Arrays.stream(child.tours).boxed().toArray()).size());
                 });
@@ -63,26 +62,26 @@ public class Parsing {
             System.out.println();
             System.out.println("original    : " + Arrays.toString(sol.tours));
             var s = sol.copy();
-            s = Mutation.singleSwap(s, rand);
+            s = Mutator.singleSwap(s, rand);
             System.out.println("single swap : " + Arrays.toString(s.tours));
             Set.of(s.tours);
             s = sol.copy();
-            s = Mutation.segmentSwap(s, rand);
+            s = Mutator.segmentSwap(s, rand);
             System.out.println("segment swap: " + Arrays.toString(s.tours));
             Set.of(s.tours);
             s = sol.copy();
-            s = Mutation.invertSwap(s, rand);
+            s = Mutator.invertSwap(s, rand);
             System.out.println("seg. reverse: " + Arrays.toString(s.tours));
             Set.of(s.tours);
         });
 
-        pop.getIndividuals().forEach(sol -> FitnessUtils.computeFitness(sol, prob));
-        FastNonDomSort.fastNonDominatedSort(pop.getIndividuals(), pop.getIndividuals().size()).forEach(front -> {
-//            System.out.println("Front");
-            System.out.println(front.stream().map(s -> {
-                return "(%s, %s)".formatted(s.getTotalLength(), s.getMaxTourLength());
-            }).toList() + ", ");
-        });
+        pop.getIndividuals().forEach(sol -> Evaluator.evaluate(sol, prob));
+//        Selection.fastNonDominatedSort(pop.getIndividuals(), pop.getIndividuals().size()).forEach(front -> {
+////            System.out.println("Front");
+//            System.out.println(front.stream().map(s -> {
+//                return "(%s, %s)".formatted(s.getTotalLength(), s.getMaxTourLength());
+//            }).toList() + ", ");
+//        });
 
     }
 

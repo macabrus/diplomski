@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "plots"
+version = "0.1.0"
+description = ""
+authors = ["Bernard Crnković <bernard.crnkovic@icloud.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+matplotlib = "^3.7.2"
+click = "^8.1.6"
+
+[tool.poetry.scripts]
+plot = "plots.main:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -6,11 +6,8 @@ import hr.fer.bernardcrnkovic.mtsp.model.Salesman;
 import hr.fer.bernardcrnkovic.mtsp.model.Solution;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.stream.Collectors;
 
-public class EncDec {
-
+public class Encoder {
 
     // embeds cache of solution encoding into single array representation
     // with dummy aliases for home depot with numbers AFTER last real depot
@@ -38,19 +35,23 @@ public class EncDec {
     }
 
     public static void decodeSolution(Solution sol, Problem prob) {
-        int offset = 1;
+        int i = 1;
         var pheno = new ArrayList<Salesman>();
-        for (int i = 1; i < sol.tours.length; i++) {
-            if (prob.dummyToRealDepot.containsKey(sol.tours[i])) {
-                var sal = new Salesman();
-//                System.out.println(Arrays.toString(sol.tours));
-//                System.out.println(prob.dummyToRealDepot);
-                sal.setDepot(prob.dummyToRealDepot.get(sol.tours[offset - 1]));
-                var salTour = new int[i - offset];
-                System.arraycopy(sol.tours, offset, salTour, 0, i - offset);
-                sal.setTour(salTour);
-                pheno.add(sal);
+        while (i < sol.tours.length) {
+            var sal = new Salesman();
+            if (!prob.dummyToRealDepot.containsKey(sol.tours[i - 1])) {
+                throw new RuntimeException();
             }
+            sal.setDepot(prob.dummyToRealDepot.get(sol.tours[i - 1]));
+            int j = i;
+            while (j < sol.tours.length && !prob.dummyToRealDepot.containsKey(sol.tours[j])) {
+                j++;
+            }
+            var tour = new int[j - i];
+            System.arraycopy(sol.tours, i, tour, 0, j - i);
+            sal.setTour(tour);
+            pheno.add(sal);
+            i = j + 1;
         }
         sol.setPhenotype(pheno);
     }

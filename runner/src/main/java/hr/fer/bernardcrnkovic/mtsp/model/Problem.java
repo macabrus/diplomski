@@ -1,5 +1,7 @@
 package hr.fer.bernardcrnkovic.mtsp.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -12,15 +14,17 @@ public class Problem {
     private String description;
     private double[][] costs;
     private int numSalesmen;
-    private int depot;
     private int[] depots; // SINGLE DEPOT ONLY
+
     // map (dummy depot) => real depot
+    @JsonIgnore
     public Map<Integer, Integer> dummyToRealDepot = new HashMap<>();
-    public Map<Integer, Integer> realToDummyDepot = new HashMap<>();
     public Map<String, double[]> display;
 
     /* For faster access */
+    @JsonIgnore
     public int numNodes;
+    @JsonIgnore
     public double[][] distances; // augmented cost matrix
     public boolean[][] present;
 
@@ -32,9 +36,14 @@ public class Problem {
         return label;
     }
 
+    public void setLabel(String label) {
+        this.label = label;
+    }
+
     public String getColor() {
         return color;
     }
+
     public double[][] getCosts() {
         return costs;
     }
@@ -47,9 +56,6 @@ public class Problem {
         this.id = id;
     }
 
-    public void setLabel(String label) {
-        this.label = label;
-    }
 
     public void setColor(String color) {
         this.color = color;
@@ -85,19 +91,19 @@ public class Problem {
         /* Number of nodes when counting dummy depots */
         /* one real depot can be used and other salesmen need fake one */
         int allNodes = realNodes + numSalesmen - 1;
-        System.out.println(allNodes);
-        Arrays.stream(depots).forEach(v -> dummyToRealDepot.put(v,v));
+        //        System.out.println(allNodes);
+        Arrays.stream(depots).forEach(v -> dummyToRealDepot.put(v, v));
         for (int i = realNodes, j = 0; i < allNodes; i++) {
             dummyToRealDepot.put(i, depots[0]);
         }
-        System.out.println(dummyToRealDepot);
+        //        System.out.println(dummyToRealDepot);
         if (depots.length > 1) {
             throw new RuntimeException("Expected exactly 1 depot.");
         }
         distances = new double[allNodes][allNodes];
         // Copy Upper left portion of matrix
         for (int i = 0; i < costs.length; i++) {
-            System.out.println(Arrays.deepToString(distances));
+            //            System.out.println(Arrays.deepToString(distances));
             System.arraycopy(costs[i], 0, distances[i], 0, costs[0].length);
         }
         // Augment with dummy depots
@@ -133,4 +139,5 @@ public class Problem {
     public int getNumSalesmen() {
         return numSalesmen;
     }
+
 }
