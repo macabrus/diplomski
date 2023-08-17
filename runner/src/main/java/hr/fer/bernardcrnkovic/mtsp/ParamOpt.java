@@ -2,7 +2,6 @@ package hr.fer.bernardcrnkovic.mtsp;
 
 import hr.fer.bernardcrnkovic.mtsp.algo.NSGA2;
 import hr.fer.bernardcrnkovic.mtsp.io.Loader;
-import hr.fer.bernardcrnkovic.mtsp.util.Listeners;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -12,7 +11,11 @@ import java.util.List;
 
 public class ParamOpt {
     public static void main(String[] args) throws IOException, InterruptedException {
-        int reps = 30;
+        int repOffset = 0;
+        int reps = 50;
+        boolean monitorSteadyGens = false;
+        int steadyGenStop = 50;
+        int maxGens = 100;
         boolean overwrite = false;
         var runNames = List.of(
             "bayg29-run.json"
@@ -23,32 +26,36 @@ public class ParamOpt {
             System.out.println("Run: " + runName);
 
             /* MUTATION_PROBABILITY optimize */
-            for (var mutProb : doubleRange(0.01, 0.3, 0.01)) {
+            for (var mutProb : doubleRange(0.01, 0.5, 0.01)) {
                 System.out.println("Mut Prob: " + mutProb);
                 /* num of repetitions */
                 for (var seed : intRange(0, reps, 1)) {
                     var p = Path.of(
-                        "output/param_opt/mut_prob/%.2f/rep/%2d".formatted(mutProb, seed),
+                        "output/param_opt/steady:off/mut_prob/%.2f/rep/%02d".formatted(mutProb, seed),
                         runName
                     );
                     if (!overwrite && p.toFile().exists()) {
                         System.out.printf("Run %s exists. Skipping.%n", p);
                         continue;
                     }
-                    System.out.println("Repetition " + seed);
+                    // System.out.println("Repetition " + seed);
                     var run = Loader.loadFromResource("/" + runName);
-                    run.state.initialSeed = seed;
-                    run.config.setStopAfterSteadyGenerations(100);
+                    run.state.initialSeed = seed + repOffset;
+                    run.config.setMonitorSteadyGenerations(monitorSteadyGens);
+                    run.config.setStopAfterSteadyGenerations(steadyGenStop);
                     run.config.setMutationProbability((float) mutProb);
-                    System.out.println("Loaded label: " + run.label);
+                    run.config.setStopAfterGenerations(maxGens);
+                    // System.out.println("Loaded label: " + run.label);
 
                     var nsga = new NSGA2(run);
 
-                    nsga.addIterationConsumer(Listeners.debugger(100));
-                    nsga.addIterationConsumer(Listeners.sleeper(1, 500));
-                    nsga.addIterationConsumer(Listeners.parettoEdgesMetricAdder(100, run));
+                    // nsga.addIterationConsumer(Listeners.debugger(1000));
+                    // nsga.addIterationConsumer(Listeners.sleeper(1, 500));
+                    // nsga.addIterationConsumer(Listeners.parettoEdgesMetricAdder(100, run));
 
                     nsga.run();
+                    System.out.println("GENERS " + run.state.generation);
+
 
                     /* persist finished run */
                     Files.createDirectories(p.getParent());

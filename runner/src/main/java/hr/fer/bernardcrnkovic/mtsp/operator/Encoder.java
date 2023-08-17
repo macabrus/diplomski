@@ -6,6 +6,7 @@ import hr.fer.bernardcrnkovic.mtsp.model.Salesman;
 import hr.fer.bernardcrnkovic.mtsp.model.Solution;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class Encoder {
 
@@ -52,6 +53,9 @@ public class Encoder {
             sal.setTour(tour);
             pheno.add(sal);
             i = j + 1;
+        }
+        if (!Objects.equals(pheno.size(), prob.getNumSalesmen())) {
+            throw new RuntimeException();
         }
         sol.setPhenotype(pheno);
     }

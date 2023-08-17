@@ -6,6 +6,7 @@ public class EvolutionConfig {
     private float mutationProbability;
     private float sharingDistance;
     private Integer stopAfterGenerations;
+    private boolean monitorSteadyGenerations;
     private int stopAfterSteadyGenerations;
     private List<String> mutationOperators;
     private List<String> crossoverOperators;
@@ -58,4 +59,11 @@ public class EvolutionConfig {
         this.crossoverOperators = crossoverOperators;
     }
 
+    public boolean isMonitorSteadyGenerations() {
+        return monitorSteadyGenerations;
+    }
+
+    public void setMonitorSteadyGenerations(boolean monitorSteadyGenerations) {
+        this.monitorSteadyGenerations = monitorSteadyGenerations;
+    }
 }

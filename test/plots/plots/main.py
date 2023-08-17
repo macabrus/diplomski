@@ -7,6 +7,7 @@ from pathlib import Path
 from pprint import pprint
 
 import click
+import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
@@ -113,11 +114,13 @@ def plot_fronts(json_file, out_file=None, dest_dir=None):
     ax.grid()
     for i, front in enumerate(fronts):
         front = sorted(front)
+        print(front)
         xs, ys = zip(*front)
         ax.plot(xs, ys, linestyle="-", marker="o", label=f"Front {i}")
     pdf.savefig(fig)
     plt.close()
     pdf.close()
+    print(f'Saved to {out_file}')
 
 
 # draw box plot for range of parameter values (such as mutation probability)
@@ -127,8 +130,6 @@ def plot_fronts(json_file, out_file=None, dest_dir=None):
 @click.argument('parameter', metavar='parameter_to_plot')
 @click.argument('glob_pat', metavar='glob_pattern')
 def plot_boxes(parameter, glob_pat):
-    import numpy as np
-
     # make data:
     paths = glob.glob(glob_pat, recursive=True)
     jsons = []
@@ -137,66 +138,85 @@ def plot_boxes(parameter, glob_pat):
             continue
         jsons.append(path)
     data = {
-        'Max Tour Length': [[] for i in range(len(jsons))],
-        'Total Length': [[] for i in range(len(jsons))],
+        'Max Tour Length': {},
+        'Total Length': {},
     }
     for j in jsons:
         with open(j, 'r') as f:
             run = json.load(f)
         seed = run['state']['seed']
-        mut_prob = run['config']['mutation_probability']
+        param_val = run['config'][parameter]
+        if param_val not in data['Max Tour Length']:
+            data['Max Tour Length'][param_val] = []
+        if param_val not in data['Total Length']:
+            data['Total Length'][param_val] = []
         print(f'seed {seed}')
-        print(f'mut  {mut_prob}')
+        print(f'param val  {param_val}')
         for sol in run['state']['population']['paretto_front']:
-            data['Max Tour Length'][seed].append(-sol['fitness']['max_tour_length'])
-            data['Total Length'][seed].append(-sol['fitness']['total_length'])
+            data['Max Tour Length'][param_val].append(-sol['fitness']['max_tour_length'])
+            data['Total Length'][param_val].append(-sol['fitness']['total_length'])
 
-    pprint(data)
-    exit(0)
-    np.random.seed(10)
-    D = np.random.normal((3, 5, 4), (1.25, 1.00, 1.25), (100, 3))
-    print(D)
+    pprint({k: sorted(v.keys()) for k, v in data.items()})
+    fig, ax = plt.subplots(1, 1)
+    ax.set_xlabel('Mutation Probability')
+    ax.set_ylabel('Fitness Value')
+    bps = []
+    for (k, v), color in zip(data.items(), ['red', 'blue']):
+        bins = sorted(v.keys())
+        bin_vals = [v[bin_] for bin_ in bins]
+        # pprint(np.asarray(bins).shape)
+        ax.set_title(k)
+        spacing = sum(y - x for x, y in zip(bins, bins[1:])) / (len(bins) - 1)
+        ax.set(xticks=bins, xlim=(bins[0] - spacing, bins[-1] + spacing))
+        ax.tick_params(axis='x', labelsize=8)
+        # ax[0, 0].set(xticks=range(1, 31), yticks=range(1, 31))
+        bp = ax.boxplot(
+            bin_vals,
+            positions=bins,
+            widths=spacing / 2,
+            patch_artist=True,
+            showmeans=True,
+            showfliers=True,
+            meanprops={
+                'marker': None,
+                'markeredgecolor': color,
+                'markersize': 6,
+            },
+            medianprops={
+                "color": color,
+                "linewidth": 1,
+            },
+            boxprops={
+                "facecolor": "#0000",
+                "edgecolor": color,
+                "linewidth": 1,
+            },
+            whiskerprops={
+                "color": color,
+                "linewidth": 1,
+            },
+            flierprops={
+                'marker': 'o',
+                'markerfacecolor': '#0000',
+                'markeredgecolor': color,
+                'markersize': 4
+            },
+            capprops={
+                "color": color,
+                "linewidth": 1
+            },
+        )
+        bps.append(bp)
+        ax.plot(bins, [sum(bv) / len(bv) for bv in bin_vals], color=color, marker=None, linewidth=1)
+    ax.legend([bp['boxes'][0] for bp in bps], data.keys())
+    ax.grid(color='#aaa', linestyle='--', linewidth=0.5)
+    plt.show()
+    #np.random.seed(10)
+    #D = np.random.normal((3, 5, 4), (1.25, 1.00, 1.25), (100, 3))
+    #print(D)
 
     # plot
-    fig, ax = plt.subplots()
-    VP = ax.boxplot(
-        D,
-        positions=[1, 2, 3],
-        widths=0.5,
-        patch_artist=True,
-        showmeans=True,
-        showfliers=True,
-        meanprops={
-            'marker': 'x',
-            'markeredgecolor': '#f00',
-            'markersize': 6,
-        },
-        medianprops={
-            "color": "red",
-            "linewidth": 1,
-        },
-        boxprops={
-            "facecolor": "#0000",
-            "edgecolor": "red",
-            "linewidth": 1,
-        },
-        whiskerprops={
-            "color": "#f008",
-            "linewidth": 1
-        },
-        flierprops={
-            'marker': 'o',
-            'markerfacecolor': '#0000',
-            'markeredgecolor': '#f008',
-            'markersize': 4
-        },
-        capprops={"color": "#f008", "linewidth": 1},
-    )
-    ax.grid(color='#aaa', linestyle='--', linewidth=0.5)
-    ax.set(xlim=(0, 8), xticks=np.arange(1, 8),
-           ylim=(0, 8), yticks=np.arange(1, 8))
 
-    plt.show()
 
 
 # plot mean convergence for varying parameter

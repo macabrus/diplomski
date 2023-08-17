@@ -5110,6 +5110,7 @@
         "sharing_distance": 300,
         "sharing_frequency": 0.05,
         "ignore_rank_probability": 0.05,
+        "should_stop_after_steady_generations": false,
         "stop_after_generations": 100000,
         "stop_after_steady_generations": 10000,
         "mutation_operators": [

@@ -76,8 +76,10 @@ public class NSGA2 {
     }
 
     public void run() throws InterruptedException {
-        while (config.getStopAfterGenerations() > state.generation
-               && config.getStopAfterSteadyGenerations() > state.steadyGenerations
+        while (config.getStopAfterGenerations() >= state.generation
+               && (!config.isMonitorSteadyGenerations()
+                   || config.isMonitorSteadyGenerations()
+                   && (config.getStopAfterSteadyGenerations() > state.steadyGenerations))
                && stopSignalSuppliers.stream().noneMatch(Supplier::get)) {
             state.generation += 1;
 
